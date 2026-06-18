@@ -30,7 +30,7 @@ kernel:
 
   auth:
     mode: ${AUTH_MODE:mock}
-    mock-profile-path: ${MOCK_PROFILE_PATH:../data/mock_profiles/}
+    mock-profile-path: ${MOCK_PROFILE_PATH:/data/mock_profiles/}
 
   index:
     path: ${INDEX_PATH:./data/index.json}

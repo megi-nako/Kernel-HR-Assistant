@@ -79,13 +79,51 @@ public class IdentityService {
      * List available mock usernames (filenames without .json from mock profile directory).
      */
     public List<String> listMockUsers() {
-        File dir = new File(props.getAuth().getMockProfilePath());
-        if (!dir.exists() || !dir.isDirectory()) return List.of();
+        File dir = resolveProfileDir();
+        if (dir == null) return List.of();
         String[] files = dir.list((d, name) -> name.endsWith(".json"));
         if (files == null) return List.of();
         return Arrays.stream(files)
             .map(f -> f.replace(".json", ""))
             .sorted()
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Resolves the mock profile directory by trying, in order:
+     *  1. The configured path as-is (works when it is absolute)
+     *  2. Relative to the JVM working directory
+     *  3. Relative to the directory that contains the running jar/classes
+     *     (handles IntelliJ working-dir variance)
+     */
+    public File resolveProfileDir() {
+        String configured = props.getAuth().getMockProfilePath();
+        // Try 1: as-is (absolute path or correct relative path)
+        File dir = new File(configured);
+        if (dir.exists() && dir.isDirectory()) {
+            log.debug("Mock profile dir resolved (direct): {}", dir.getAbsolutePath());
+            return dir;
+        }
+        // Try 2: relative to working directory
+        dir = new File(System.getProperty("user.dir"), configured);
+        if (dir.exists() && dir.isDirectory()) {
+            log.debug("Mock profile dir resolved (user.dir): {}", dir.getAbsolutePath());
+            return dir;
+        }
+        // Try 3: walk up from working directory until we find data/mock_profiles
+        File search = new File(System.getProperty("user.dir"));
+        for (int i = 0; i < 4; i++) {
+            File candidate = new File(search, "data/mock_profiles");
+            if (candidate.exists() && candidate.isDirectory()) {
+                log.debug("Mock profile dir resolved (search): {}", candidate.getAbsolutePath());
+                return candidate;
+            }
+            search = search.getParentFile();
+            if (search == null) break;
+        }
+        log.error("Mock profile directory not found. Tried '{}', user.dir='{}'. " +
+                  "Set MOCK_PROFILE_PATH to the absolute path of data/mock_profiles/",
+                  configured, System.getProperty("user.dir"));
+        return null;
     }
 }
