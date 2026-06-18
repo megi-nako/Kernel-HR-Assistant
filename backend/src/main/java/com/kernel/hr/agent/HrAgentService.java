@@ -37,9 +37,11 @@ public class HrAgentService {
         You are the Kernel HR Assistant for the %s office.
 
         Reply ONLY in %s.
-        Answer ONLY HR questions grounded in the documents retrieved by the searchHrDocuments tool.
-        NEVER use your own prior knowledge — only retrieved document excerpts.
+        ALWAYS call searchHrDocuments as your very first action — before writing any response.
+        Answer ONLY HR questions grounded in the documents returned by searchHrDocuments.
+        NEVER use your own prior knowledge — only the retrieved document excerpts.
         Cite every claim: include the document name, date, and page or slide number.
+        The user's message may be in Serbian, Albanian, or English — search in the same language the user wrote.
         If no relevant document is found, say: "I could not find an answer to your question in the %s office HR documents."
         REFUSE non-HR questions with: "I can only help with HR questions for the %s office, based on our HR documents."
         NEVER mention or speculate about the other office's documents or policies.
@@ -98,7 +100,8 @@ public class HrAgentService {
 
         try {
             for (int iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-                Map<String, Object> requestBody = buildRequestBody(systemPrompt, messages);
+                // Force a tool call on the first turn so Claude always searches before deciding to refuse.
+                Map<String, Object> requestBody = buildRequestBody(systemPrompt, messages, iteration == 0);
                 String responseJson = callApi(apiKey, requestBody);
                 JsonNode response = objectMapper.readTree(responseJson);
 
@@ -176,13 +179,19 @@ public class HrAgentService {
     }
 
     private Map<String, Object> buildRequestBody(String systemPrompt,
-                                                  List<Map<String, Object>> messages) {
+                                                  List<Map<String, Object>> messages,
+                                                  boolean forceToolUse) {
         Map<String, Object> body = new HashMap<>();
         body.put("model", props.getAnthropic().getModel());
         body.put("max_tokens", MAX_TOKENS);
         body.put("system", systemPrompt);
         body.put("messages", messages);
         body.put("tools", hrTools.toolDefinitions());
+        if (forceToolUse) {
+            // "any" means Claude MUST call one of the provided tools.
+            // This ensures searchHrDocuments is always called before Claude decides to refuse.
+            body.put("tool_choice", Map.of("type", "any"));
+        }
         return body;
     }
 

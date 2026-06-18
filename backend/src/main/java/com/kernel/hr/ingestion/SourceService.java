@@ -8,13 +8,15 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Routes document loading to the correct source per office and ALB_SOURCE config.
+ * Routes document loading to the correct source per office.
  *
- * Serbia  → "zip" (default): ZIP via ZipSource (SRB_ZIP_PATH)
- *           "folder"        : plain folder via LocalFolderSource (SRB_FOLDER_PATH)
- * Albania → "sharepoint" (default): Graph API via SharePointClient
- *           "local"                : local ZIP via LocalZipAlbaniaSource (ALB_ZIP_PATH)
- *           "folder"               : plain folder via LocalFolderSource (ALB_FOLDER_PATH)
+ * Serbia  — SRB_SOURCE : zip (default) | folder
+ * Albania — ALB_SOURCE : sharepoint (default) | local | folder
+ *
+ * "zip"        → ZipSource            (extracts ZIP, tags office from source)
+ * "folder"     → LocalFolderSource    (walks a directory, tags office from source)
+ * "local"      → LocalZipAlbaniaSource (Albania-specific ZIP fallback)
+ * "sharepoint" → SharePointClient     (Graph API download)
  */
 @Service
 public class SourceService {
@@ -23,25 +25,25 @@ public class SourceService {
 
     private final AppProperties props;
     private final ZipSource zipSource;
-    private final SharePointClient sharePointClient;
-    private final LocalZipAlbaniaSource localZipAlbaniaSource;
     private final LocalFolderSource localFolderSource;
+    private final LocalZipAlbaniaSource localZipAlbaniaSource;
+    private final SharePointClient sharePointClient;
 
     public SourceService(AppProperties props,
                          ZipSource zipSource,
-                         SharePointClient sharePointClient,
+                         LocalFolderSource localFolderSource,
                          LocalZipAlbaniaSource localZipAlbaniaSource,
-                         LocalFolderSource localFolderSource) {
+                         SharePointClient sharePointClient) {
         this.props = props;
         this.zipSource = zipSource;
-        this.sharePointClient = sharePointClient;
-        this.localZipAlbaniaSource = localZipAlbaniaSource;
         this.localFolderSource = localFolderSource;
+        this.localZipAlbaniaSource = localZipAlbaniaSource;
+        this.sharePointClient = sharePointClient;
     }
 
     public List<SourceDoc> iterDocuments(String office) {
         return switch (office) {
-            case "serbia" -> loadSerbia();
+            case "serbia"  -> loadSerbia();
             case "albania" -> loadAlbania();
             default -> throw new IllegalArgumentException("Unknown office: " + office);
         };
@@ -51,7 +53,7 @@ public class SourceService {
         String source = props.getSrb().getSource();
         log.info("Loading Serbia documents via source: {}", source);
         return switch (source) {
-            case "zip" -> zipSource.loadAll();
+            case "zip"    -> zipSource.loadAll();
             case "folder" -> localFolderSource.loadAll(props.getSrb().getFolderPath(), "serbia");
             default -> throw new IllegalStateException(
                     "Unknown SRB_SOURCE: '" + source + "'. Must be 'zip' or 'folder'.");
@@ -63,13 +65,10 @@ public class SourceService {
         log.info("Loading Albania documents via source: {}", source);
         return switch (source) {
             case "sharepoint" -> {
-                try {
-                    yield sharePointClient.loadAll();
-                } catch (Exception e) {
-                    throw new RuntimeException("SharePoint ingestion failed: " + e.getMessage(), e);
-                }
+                try { yield sharePointClient.loadAll(); }
+                catch (Exception e) { throw new RuntimeException("SharePoint ingestion failed: " + e.getMessage(), e); }
             }
-            case "local" -> localZipAlbaniaSource.loadAll();
+            case "local"  -> localZipAlbaniaSource.loadAll();
             case "folder" -> localFolderSource.loadAll(props.getAlb().getFolderPath(), "albania");
             default -> throw new IllegalStateException(
                     "Unknown ALB_SOURCE: '" + source + "'. Must be 'sharepoint', 'local', or 'folder'.");

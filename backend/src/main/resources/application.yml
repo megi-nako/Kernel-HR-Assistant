@@ -1,21 +1,21 @@
 kernel:
   anthropic:
-    api-key: ${ANTHROPIC_API_KEY:}
+    api-key: ${ANTHROPIC_API_KEY}
     model: ${CLAUDE_MODEL:claude-opus-4-8}
 
   embedding:
     provider: ${EMBEDDING_PROVIDER:voyage}
-    voyage-api-key: ${VOYAGE_API_KEY:}
+    voyage-api-key: ${VOYAGE_API_KEY}
     model: ${EMBEDDING_MODEL:voyage-3}
 
   srb:
-    source: ${SRB_SOURCE:zip}          # zip | folder
+    source: ${SRB_SOURCE:zip}           # zip | folder
     zip-path: ${SRB_ZIP_PATH:./data/srb_docs.zip}
     extract-dir: ${SRB_EXTRACT_DIR:./data/_srb_extracted}
     folder-path: ${SRB_FOLDER_PATH:}
 
   alb:
-    source: ${ALB_SOURCE:sharepoint}   # sharepoint | local | folder
+    source: ${ALB_SOURCE:sharepoint}    # sharepoint | local | folder
     zip-path: ${ALB_ZIP_PATH:}
     folder-path: ${ALB_FOLDER_PATH:}
 
@@ -30,7 +30,10 @@ kernel:
 
   auth:
     mode: ${AUTH_MODE:mock}
-    mock-profile-path: ${MOCK_PROFILE_PATH:../data/mock_profiles/}
+    mock-profile-path: ${MOCK_PROFILE_PATH:/data/mock_profiles/}
+
+  agent:
+    scope-threshold: ${SCOPE_THRESHOLD:0.25}
 
   index:
     path: ${INDEX_PATH:./data/index.json}
@@ -38,8 +41,8 @@ kernel:
 spring:
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/hrdb}
-    username: ${DATABASE_USER:postgres}
-    password: ${DATABASE_PASSWORD:admin}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
   sql:
     init:
       mode: always            # runs schema.sql on every startup (idempotent — uses IF NOT EXISTS)
