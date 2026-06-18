@@ -10,9 +10,11 @@ import java.util.List;
 /**
  * Routes document loading to the correct source per office and ALB_SOURCE config.
  *
- * Serbia  → always ZIP (SRB_ZIP_PATH)
+ * Serbia  → "zip" (default): ZIP via ZipSource (SRB_ZIP_PATH)
+ *           "folder"        : plain folder via LocalFolderSource (SRB_FOLDER_PATH)
  * Albania → "sharepoint" (default): Graph API via SharePointClient
  *           "local"                : local ZIP via LocalZipAlbaniaSource (ALB_ZIP_PATH)
+ *           "folder"               : plain folder via LocalFolderSource (ALB_FOLDER_PATH)
  */
 @Service
 public class SourceService {
@@ -23,22 +25,36 @@ public class SourceService {
     private final ZipSource zipSource;
     private final SharePointClient sharePointClient;
     private final LocalZipAlbaniaSource localZipAlbaniaSource;
+    private final LocalFolderSource localFolderSource;
 
     public SourceService(AppProperties props,
                          ZipSource zipSource,
                          SharePointClient sharePointClient,
-                         LocalZipAlbaniaSource localZipAlbaniaSource) {
+                         LocalZipAlbaniaSource localZipAlbaniaSource,
+                         LocalFolderSource localFolderSource) {
         this.props = props;
         this.zipSource = zipSource;
         this.sharePointClient = sharePointClient;
         this.localZipAlbaniaSource = localZipAlbaniaSource;
+        this.localFolderSource = localFolderSource;
     }
 
     public List<SourceDoc> iterDocuments(String office) {
         return switch (office) {
-            case "serbia" -> zipSource.loadAll();
+            case "serbia" -> loadSerbia();
             case "albania" -> loadAlbania();
             default -> throw new IllegalArgumentException("Unknown office: " + office);
+        };
+    }
+
+    private List<SourceDoc> loadSerbia() {
+        String source = props.getSrb().getSource();
+        log.info("Loading Serbia documents via source: {}", source);
+        return switch (source) {
+            case "zip" -> zipSource.loadAll();
+            case "folder" -> localFolderSource.loadAll(props.getSrb().getFolderPath(), "serbia");
+            default -> throw new IllegalStateException(
+                    "Unknown SRB_SOURCE: '" + source + "'. Must be 'zip' or 'folder'.");
         };
     }
 
@@ -54,8 +70,9 @@ public class SourceService {
                 }
             }
             case "local" -> localZipAlbaniaSource.loadAll();
+            case "folder" -> localFolderSource.loadAll(props.getAlb().getFolderPath(), "albania");
             default -> throw new IllegalStateException(
-                    "Unknown ALB_SOURCE: '" + source + "'. Must be 'sharepoint' or 'local'.");
+                    "Unknown ALB_SOURCE: '" + source + "'. Must be 'sharepoint', 'local', or 'folder'.");
         };
     }
 }
