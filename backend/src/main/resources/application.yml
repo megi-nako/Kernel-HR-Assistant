@@ -33,6 +33,16 @@ kernel:
   index:
     path: ${INDEX_PATH:./data/index.json}
 
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/hrdb}
+    username: ${DATABASE_USER:postgres}
+    password: ${DATABASE_PASSWORD:admin}
+  sql:
+    init:
+      mode: always            # runs schema.sql on every startup (idempotent — uses IF NOT EXISTS)
+      continue-on-error: false  # set to true temporarily if pgvector extension isn't installed yet
+
 server:
   port: 8080
 

@@ -1,25 +1,25 @@
 package com.kernel.hr.store;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kernel.hr.config.AppProperties;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * Vector store backed by PostgreSQL + pgvector.
+ *
+ * Persistence is handled by PostgreSQL — save() and load() are no-ops kept for
+ * interface compatibility with IngestionRunner.
+ *
+ * Requires: pgvector extension installed, schema.sql applied (runs automatically on startup).
+ */
 @Component
 public class VectorStore {
 
@@ -27,87 +27,132 @@ public class VectorStore {
 
     public record Scored(Chunk chunk, double score) {}
 
-    private final Map<String, Chunk> store = new ConcurrentHashMap<>();
-    private final AppProperties props;
-    private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbc;
 
-    public VectorStore(AppProperties props, ObjectMapper objectMapper) {
-        this.props = props;
-        this.objectMapper = objectMapper;
+    public VectorStore(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
-    @PostConstruct
-    public void load() {
-        Path indexPath = Paths.get(props.getIndex().getPath());
-        if (!Files.exists(indexPath)) {
-            log.info("Index file not found at {}; starting with empty store.", indexPath);
-            return;
-        }
-        try {
-            List<Chunk> chunks = objectMapper.readValue(indexPath.toFile(), new TypeReference<List<Chunk>>() {});
-            store.clear();
-            for (Chunk chunk : chunks) {
-                store.put(chunk.id(), chunk);
-            }
-            log.info("Loaded {} chunks from index at {}", store.size(), indexPath);
-        } catch (IOException e) {
-            log.error("Failed to load index from {}: {}", indexPath, e.getMessage(), e);
-        }
-    }
+    // -------------------------------------------------------------------------
+    // Write
+    // -------------------------------------------------------------------------
 
     public void upsert(List<Chunk> chunks) {
         for (Chunk chunk : chunks) {
-            store.put(chunk.id(), chunk);
+            jdbc.update("""
+                    INSERT INTO chunks
+                        (id, content, office, source_name, source_url,
+                         last_modified, page, file_type, language, vector)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CAST(? AS vector))
+                    ON CONFLICT (id) DO UPDATE SET
+                        content       = EXCLUDED.content,
+                        last_modified = EXCLUDED.last_modified,
+                        vector        = EXCLUDED.vector
+                    """,
+                    chunk.id(),
+                    chunk.content(),
+                    chunk.office(),
+                    chunk.sourceName(),
+                    chunk.sourceUrl(),
+                    chunk.lastModified(),
+                    chunk.page(),
+                    chunk.fileType(),
+                    chunk.language(),
+                    toVectorLiteral(chunk.vector())
+            );
         }
+        log.debug("Upserted {} chunks", chunks.size());
     }
 
+    // -------------------------------------------------------------------------
+    // Read
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns the top-k chunks for the given office, ranked by cosine similarity.
+     * The office filter is applied BEFORE the vector comparison — other-office rows
+     * never enter the candidate set.
+     */
     public List<Scored> search(float[] queryVector, String office, int k) {
-        return store.values().stream()
-                .filter(chunk -> office.equals(chunk.office()))
-                .filter(chunk -> chunk.vector() != null)
-                .map(chunk -> new Scored(chunk, cosine(queryVector, chunk.vector())))
-                .sorted(Comparator.comparingDouble(Scored::score).reversed())
-                .limit(k)
-                .collect(Collectors.toList());
-    }
-
-    public void save() {
-        Path indexPath = Paths.get(props.getIndex().getPath());
-        try {
-            Files.createDirectories(indexPath.getParent());
-            Path tmpPath = indexPath.resolveSibling(indexPath.getFileName() + ".tmp");
-            List<Chunk> chunks = new ArrayList<>(store.values());
-            objectMapper.writeValue(tmpPath.toFile(), chunks);
-            Files.move(tmpPath, indexPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            log.info("Saved {} chunks to index at {}", chunks.size(), indexPath);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save index to " + indexPath, e);
-        }
+        String q = toVectorLiteral(queryVector);
+        return jdbc.query("""
+                SELECT id, content, office, source_name, source_url,
+                       last_modified, page, file_type, language, vector,
+                       1 - (vector <=> CAST(? AS vector)) AS score
+                FROM   chunks
+                WHERE  office = ?
+                  AND  vector IS NOT NULL
+                ORDER  BY vector <=> CAST(? AS vector)
+                LIMIT  ?
+                """,
+                (rs, rowNum) -> new Scored(mapRow(rs), rs.getDouble("score")),
+                q, office, q, k
+        );
     }
 
     public boolean hasChunk(String id) {
-        return store.containsKey(id);
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(1) FROM chunks WHERE id = ?", Integer.class, id);
+        return count != null && count > 0;
     }
 
     public int countByOffice(String office) {
-        return (int) store.values().stream()
-                .filter(chunk -> office.equals(chunk.office()))
-                .count();
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(1) FROM chunks WHERE office = ?", Integer.class, office);
+        return count != null ? count : 0;
     }
 
-    private double cosine(float[] a, float[] b) {
-        if (a == null || b == null || a.length != b.length) return 0.0;
-        double dot = 0.0;
-        double normA = 0.0;
-        double normB = 0.0;
-        for (int i = 0; i < a.length; i++) {
-            dot += (double) a[i] * b[i];
-            normA += (double) a[i] * a[i];
-            normB += (double) b[i] * b[i];
+    // -------------------------------------------------------------------------
+    // No-ops — PostgreSQL handles persistence natively
+    // -------------------------------------------------------------------------
+
+    public void save() {
+        log.debug("save() is a no-op — PostgreSQL persists automatically.");
+    }
+
+    public void load() {
+        log.debug("load() is a no-op — PostgreSQL persists automatically.");
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private String toVectorLiteral(float[] vector) {
+        if (vector == null) return null;
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < vector.length; i++) {
+            if (i > 0) sb.append(",");
+            sb.append(vector[i]);
         }
-        normA = Math.sqrt(normA);
-        normB = Math.sqrt(normB);
-        if (normA == 0.0 || normB == 0.0) return 0.0;
-        return dot / (normA * normB);
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private float[] parseVectorLiteral(String s) {
+        if (s == null) return null;
+        s = s.trim();
+        if (s.startsWith("[")) s = s.substring(1, s.length() - 1);
+        String[] parts = s.split(",");
+        float[] result = new float[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            result[i] = Float.parseFloat(parts[i].trim());
+        }
+        return result;
+    }
+
+    private Chunk mapRow(ResultSet rs) throws SQLException {
+        return new Chunk(
+                rs.getString("id"),
+                rs.getString("content"),
+                rs.getString("office"),
+                rs.getString("source_name"),
+                rs.getString("source_url"),
+                rs.getString("last_modified"),
+                (Integer) rs.getObject("page"),
+                rs.getString("file_type"),
+                rs.getString("language"),
+                parseVectorLiteral(rs.getString("vector"))
+        );
     }
 }
