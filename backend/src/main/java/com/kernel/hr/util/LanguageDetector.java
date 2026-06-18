@@ -19,10 +19,15 @@ public class LanguageDetector {
         "dhe", "një", "për", "me", "nga", "çfarë", "si", "kur", "ditë", "pushime",
         "punonjës", "kompani", "rregullore", "politika", "lejen", "shëndetit");
 
-    // Serbian SR keywords (common function words)
+    // Serbian SR keywords (function words + HR/insurance domain terms)
     private static final Set<String> SR_WORDS = Set.of(
         "kako", "što", "koji", "koja", "koje", "dana", "radnog", "odmor", "zaposleni",
-        "kompanija", "pravilnik", "godišnji", "bolovanje", "zahtev", "nije", "sam");
+        "kompanija", "pravilnik", "godišnji", "bolovanje", "zahtev", "nije", "sam",
+        // HR/insurance terms found in Serbia documents
+        "limita", "učešća", "isključenje", "naknada", "naknade", "naknadu",
+        "osiguranje", "osiguranja", "broju", "pravo", "prava", "dani",
+        "zaposlenog", "radnik", "radnika", "ugovor", "ugovora",
+        "godišnjeg", "odmora", "bolesti", "porodiljsko", "trudnoća");
 
     public String detect(String text) {
         if (text == null || text.trim().length() < MIN_TEXT_LENGTH) {

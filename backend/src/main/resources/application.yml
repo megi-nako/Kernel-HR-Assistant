@@ -9,13 +9,15 @@ kernel:
     model: ${EMBEDDING_MODEL:voyage-3}
 
   srb:
-    source: ${SRB_SOURCE:zip}
+    source: ${SRB_SOURCE:zip}           # zip | folder
     zip-path: ${SRB_ZIP_PATH:./data/srb_docs.zip}
     extract-dir: ${SRB_EXTRACT_DIR:./data/_srb_extracted}
+    folder-path: ${SRB_FOLDER_PATH:}
 
   alb:
-    source: ${ALB_SOURCE:sharepoint}
+    source: ${ALB_SOURCE:sharepoint}    # sharepoint | local | folder
     zip-path: ${ALB_ZIP_PATH:}
+    folder-path: ${ALB_FOLDER_PATH:}
 
   graph:
     tenant-id: ${GRAPH_TENANT_ID:}
@@ -28,7 +30,10 @@ kernel:
 
   auth:
     mode: ${AUTH_MODE:mock}
-    mock-profile-path: ${MOCK_PROFILE_PATH:../data/mock_profiles/}
+    mock-profile-path: ${MOCK_PROFILE_PATH:/data/mock_profiles/}
+
+  agent:
+    scope-threshold: ${SCOPE_THRESHOLD:0.25}
 
   index:
     path: ${INDEX_PATH:./data/index.json}

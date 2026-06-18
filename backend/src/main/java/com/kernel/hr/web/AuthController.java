@@ -82,10 +82,15 @@ public class AuthController {
 
     private IdentityService.User resolveUser(String username) throws Exception {
         if ("mock".equals(props.getAuth().getMode())) {
-            File profileFile = new File(
-                props.getAuth().getMockProfilePath(), username + ".json");
+            File dir = identityService.resolveProfileDir();
+            if (dir == null) {
+                throw new IllegalArgumentException(
+                    "Mock profile directory not found. Set MOCK_PROFILE_PATH to the absolute path of data/mock_profiles/");
+            }
+            File profileFile = new File(dir, username + ".json");
             if (!profileFile.exists()) {
-                throw new IllegalArgumentException("Mock profile not found: " + username);
+                throw new IllegalArgumentException(
+                    "Mock profile not found: '" + username + "' (looked in: " + dir.getAbsolutePath() + ")");
             }
             JsonNode profile = objectMapper.readTree(profileFile);
             return identityService.loadUser(profile);

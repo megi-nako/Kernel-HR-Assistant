@@ -56,21 +56,27 @@ public class AppProperties {
         private String source = "zip";
         private String zipPath = "./data/srb_docs.zip";
         private String extractDir = "./data/_srb_extracted";
+        private String folderPath = "";
         public String getSource() { return source; }
         public void setSource(String source) { this.source = source; }
         public String getZipPath() { return zipPath; }
         public void setZipPath(String zipPath) { this.zipPath = zipPath; }
         public String getExtractDir() { return extractDir; }
         public void setExtractDir(String extractDir) { this.extractDir = extractDir; }
+        public String getFolderPath() { return folderPath; }
+        public void setFolderPath(String folderPath) { this.folderPath = folderPath; }
     }
 
     public static class Alb {
-        private String source = "sharepoint";
+        private String source = "folder";
         private String zipPath = "";
+        private String folderPath = "";
         public String getSource() { return source; }
         public void setSource(String source) { this.source = source; }
         public String getZipPath() { return zipPath; }
         public void setZipPath(String zipPath) { this.zipPath = zipPath; }
+        public String getFolderPath() { return folderPath; }
+        public void setFolderPath(String folderPath) { this.folderPath = folderPath; }
     }
 
     public static class Graph {
