@@ -1,6 +1,11 @@
 # Kernel HR Assistant
 
-Multilingual HR chatbot (EN / SR / SQ) grounded in HR documents from SharePoint (Albania) and a configurable ZIP (Serbia). Built with Spring Boot + Angular + Claude Opus 4.8 + Voyage AI embeddings + PostgreSQL/pgvector.
+Multilingual HR chatbot (EN / SR / SQ) grounded in HR documents from SharePoint (Albania) and a configurable ZIP (Serbia). Built with Spring Boot + React/Vite + Claude Opus 4.8 + Voyage AI embeddings + PostgreSQL/pgvector.
+
+**Documentation:**
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — Full technical architecture, data flows, security model, API contract
+- [SPEC.md](./SPEC.md) — Agent specification: tool schemas, system prompt, retrieval strategy, security layers
+- [LLM_UTILIZATION.md](./LLM_UTILIZATION.md) — LLM usage details: models, prompting, tool-use protocol, rate limits
 
 ---
 
@@ -11,7 +16,6 @@ Multilingual HR chatbot (EN / SR / SQ) grounded in HR documents from SharePoint 
 | JDK | 17+ | `java -version` |
 | Maven | 3.8+ | `mvn -version` |
 | Node.js | 18+ | `node -version` |
-| Angular CLI | 17+ | `npm install -g @angular/cli` |
 | Docker | any | for the database |
 
 ---
@@ -24,7 +28,7 @@ The database runs in Docker using the official `pgvector/pgvector:pg17` image, w
 docker compose up -d
 ```
 
-This starts PostgreSQL 17 on port **5432** with:
+This starts PostgreSQL 17 on port **5433** with:
 - User: `postgres` / Password: `admin`
 - Database: `hrdb` (created automatically)
 - Named volume `hr_pgdata` for data persistence
@@ -58,7 +62,7 @@ export VOYAGE_API_KEY=pa-...
 export EMBEDDING_MODEL=voyage-3              # default
 
 # ── Database ─────────────────────────────────────────────────────────────────
-export DATABASE_URL=jdbc:postgresql://localhost:5432/hrdb
+export DATABASE_URL=jdbc:postgresql://localhost:5433/hrdb
 export DATABASE_USER=postgres
 export DATABASE_PASSWORD=admin
 
@@ -131,10 +135,10 @@ On startup the application will:
 ```bash
 cd frontend
 npm install
-ng serve
+npm run dev
 ```
 
-Open `http://localhost:4200`.
+Open `http://localhost:5173`.
 
 ---
 
