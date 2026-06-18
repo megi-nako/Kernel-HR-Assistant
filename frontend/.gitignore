@@ -11,6 +11,11 @@
 npm-debug.log
 yarn-error.log
 
+# Local env (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+
 # IDEs and editors
 .idea/
 .project
