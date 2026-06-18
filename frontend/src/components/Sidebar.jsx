@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Search, MessageCircle, Settings } from 'lucide-react'
+import { Plus, Search, MessageCircle, LogOut } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Avatar } from './ds/Avatar'
 import { Button } from './ds/Button'
@@ -15,15 +15,16 @@ function HistoryItem({ item, active, onSelect }) {
       onMouseLeave={() => setHover(false)}
       style={{
         display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
-        padding: '9px 12px', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+        padding: '9px 12px', border: 'none', borderRadius: 'var(--radius-control)', cursor: 'pointer',
         fontFamily: 'var(--font-sans)', fontSize: 13.5,
         fontWeight: active ? 600 : 500,
-        color: active ? 'var(--brand)' : 'var(--text-body)',
-        background: active ? 'var(--brand-soft)' : hover ? 'var(--surface-sunken)' : 'transparent',
+        color: active ? '#fff' : 'var(--text-on-dark-muted)',
+        background: active ? 'rgba(214,36,154,.20)' : hover ? 'var(--surface-dark-hover)' : 'transparent',
+        boxShadow: active ? 'inset 2px 0 0 var(--eng-400)' : 'none',
         transition: 'var(--transition-control)',
       }}
     >
-      <span style={{ color: active ? 'var(--brand)' : 'var(--text-subtle)', display: 'flex', flex: 'none' }}>
+      <span style={{ color: active ? 'var(--eng-300)' : 'var(--text-on-dark-subtle)', display: 'flex', flex: 'none' }}>
         <MessageCircle size={16} />
       </span>
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
@@ -35,6 +36,8 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
   const { user, clearUser } = useSession()
   const navigate = useNavigate()
   const [status, setStatus] = useState(null)
+  const [hoverSearch, setHoverSearch] = useState(false)
+  const [hoverOut, setHoverOut] = useState(false)
 
   useEffect(() => {
     api.status().then(setStatus).catch(() => {})
@@ -52,12 +55,12 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
   return (
     <aside style={{
       width: 268, flex: 'none', height: '100%', boxSizing: 'border-box',
-      background: 'var(--surface-card)', borderRight: '1px solid var(--border-subtle)',
+      background: 'var(--surface-dark)', borderRight: '1px solid var(--border-on-dark)',
       display: 'flex', flexDirection: 'column', padding: '18px 14px',
     }}>
       {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 16px' }}>
-        <img src="/logo-wordmark.svg" height="30" alt="Harmony" />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px 18px' }}>
+        <img src="/eng-logo.svg" height="26" alt="eng" />
       </div>
 
       {/* New chat button */}
@@ -72,13 +75,18 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
       </Button>
 
       {/* Search (decorative) */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', marginBottom: 16,
-        border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)',
-        color: 'var(--text-subtle)', cursor: 'text',
-      }}>
+      <div
+        onMouseEnter={() => setHoverSearch(true)}
+        onMouseLeave={() => setHoverSearch(false)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', marginBottom: 16,
+          border: `1px solid ${hoverSearch ? 'var(--border-on-dark-strong)' : 'var(--border-on-dark)'}`,
+          borderRadius: 'var(--radius-control)', color: 'var(--text-on-dark-subtle)', cursor: 'text',
+          transition: 'var(--transition-control)',
+        }}
+      >
         <Search size={16} />
-        <span style={{ fontSize: 13.5, color: 'var(--text-subtle)' }}>Search chats</span>
+        <span style={{ fontSize: 13.5 }}>Search chats</span>
       </div>
 
       {/* Chat history */}
@@ -87,7 +95,7 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
           <div key={when} style={{ marginBottom: 14 }}>
             <div style={{
               fontSize: 11, fontWeight: 800, letterSpacing: '.05em',
-              textTransform: 'uppercase', color: 'var(--text-subtle)', padding: '0 12px 6px',
+              textTransform: 'uppercase', color: 'var(--text-on-dark-subtle)', padding: '0 12px 6px',
             }}>
               {when}
             </div>
@@ -103,20 +111,20 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
       {/* Index status */}
       {status && (
         <div style={{
-          fontSize: 11.5, color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)',
+          fontSize: 11.5, color: 'var(--text-on-dark-muted)', borderTop: '1px solid var(--border-on-dark)',
           paddingTop: 12, marginBottom: 8,
         }}>
-          <div style={{ fontWeight: 700, color: 'var(--text-subtle)', marginBottom: 3 }}>Index status</div>
+          <div style={{ fontWeight: 700, color: 'var(--text-on-dark-subtle)', marginBottom: 3 }}>Index status</div>
           <div>{status.docCount} documents indexed</div>
         </div>
       )}
 
       {/* User info */}
-      <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 14, marginTop: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px', borderRadius: 'var(--radius-sm)' }}>
+      <div style={{ borderTop: '1px solid var(--border-on-dark)', paddingTop: 14, marginTop: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 8px', borderRadius: 'var(--radius-control)' }}>
           <Avatar name={displayName} size="md" status="online" />
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
@@ -132,13 +140,16 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
           </div>
           <button
             onClick={async () => { await api.logout(); clearUser(); navigate('/login') }}
+            onMouseEnter={() => setHoverOut(true)}
+            onMouseLeave={() => setHoverOut(false)}
             title="Sign out"
             style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-subtle)', display: 'flex', padding: 4, borderRadius: 'var(--radius-xs)',
+              background: hoverOut ? 'var(--surface-dark-hover)' : 'none', border: 'none', cursor: 'pointer',
+              color: hoverOut ? '#fff' : 'var(--text-on-dark-subtle)', display: 'flex', padding: 6,
+              borderRadius: 'var(--radius-control)', transition: 'var(--transition-control)',
             }}
           >
-            <Settings size={17} />
+            <LogOut size={17} />
           </button>
         </div>
       </div>

@@ -20,8 +20,8 @@ export function Avatar({ src, name, size = 'md', variant = 'user', status, style
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: 'var(--font-sans)', fontSize, fontWeight: 'var(--weight-bold)',
         color: isAI ? 'var(--neutral-0)' : 'var(--brand)',
-        background: isAI ? 'linear-gradient(135deg,#6366F1,#4F46E5)' : 'var(--brand-soft)',
-        border: isAI ? 'none' : '1px solid var(--indigo-100)',
+        background: isAI ? 'var(--brand-gradient)' : 'var(--brand-soft)',
+        border: isAI ? 'none' : '1px solid var(--eng-100)',
         ...style,
       }}>
         {src

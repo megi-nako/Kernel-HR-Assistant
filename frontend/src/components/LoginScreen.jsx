@@ -3,20 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import { Clock, ShieldCheck, Lock } from 'lucide-react'
 import { useSession } from '../contexts/SessionContext'
 import api from '../services'
+import { BRAND } from '../brand'
 
 function Feature({ icon: Icon, title, desc }) {
   return (
     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
       <div style={{
-        width: 40, height: 40, flex: 'none', borderRadius: 'var(--radius-md)',
-        background: 'rgba(255,255,255,.16)', display: 'flex',
-        alignItems: 'center', justifyContent: 'center', color: '#fff',
+        width: 40, height: 40, flex: 'none', borderRadius: 'var(--radius-control)',
+        background: 'rgba(214,36,154,.22)', border: '1px solid rgba(214,36,154,.38)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
       }}>
         <Icon size={20} />
       </div>
       <div>
         <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>{title}</div>
-        <div style={{ color: 'rgba(255,255,255,.72)', fontSize: 13.5, lineHeight: 1.5 }}>{desc}</div>
+        <div style={{ color: 'var(--text-on-dark-muted)', fontSize: 13.5, lineHeight: 1.5 }}>{desc}</div>
       </div>
     </div>
   )
@@ -50,32 +51,32 @@ export default function LoginScreen() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--surface-card)' }}>
-      {/* Brand panel */}
+      {/* Brand panel — Engineering dark hero */}
       <div style={{
         flex: '1 1 50%', position: 'relative', overflow: 'hidden',
-        background: 'linear-gradient(150deg,#4F46E5 0%,#6366F1 55%,#818CF8 100%)',
+        background: 'var(--hero-dark)',
         padding: '56px 56px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
       }}>
         <div style={{
-          position: 'absolute', width: 420, height: 420, borderRadius: '50%',
-          background: 'rgba(255,255,255,.10)', top: -120, right: -120, pointerEvents: 'none',
+          position: 'absolute', width: 460, height: 460, borderRadius: '50%',
+          border: '1px solid rgba(255,255,255,.08)', top: -160, right: -120, pointerEvents: 'none',
         }} />
         <div style={{
-          position: 'absolute', width: 260, height: 260, borderRadius: '50%',
-          background: 'rgba(255,255,255,.08)', bottom: -80, left: -60, pointerEvents: 'none',
+          position: 'absolute', width: 300, height: 300, borderRadius: '50%',
+          border: '1px solid rgba(255,255,255,.06)', bottom: -90, left: -70, pointerEvents: 'none',
         }} />
 
-        <img src="/logo-wordmark-inverse.svg" height="40" alt="Harmony" style={{ position: 'relative' }} />
+        <img src="/eng-logo.svg" height="36" alt={BRAND.company} style={{ position: 'relative' }} />
 
-        <div style={{ position: 'relative', maxWidth: 380 }}>
+        <div style={{ position: 'relative', maxWidth: 400 }}>
           <h1 style={{
-            color: '#fff', fontSize: 38, lineHeight: 1.12, fontWeight: 800,
-            letterSpacing: '-.02em', margin: '0 0 14px',
+            color: '#fff', fontSize: 40, lineHeight: 1.1, fontWeight: 800,
+            letterSpacing: '-.03em', margin: '0 0 16px',
           }}>
             HR answers, the moment you need them.
           </h1>
-          <p style={{ color: 'rgba(255,255,255,.78)', fontSize: 16, lineHeight: 1.6, margin: '0 0 36px' }}>
-            Kernel HR is your always-on HR assistant — time off, benefits, payroll and policies, in plain language.
+          <p style={{ color: 'var(--text-on-dark-muted)', fontSize: 16, lineHeight: 1.6, margin: '0 0 36px' }}>
+            {BRAND.name} is your always-on HR assistant — time off, benefits, payroll and policies, in plain language.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <Feature icon={Clock} title="Instant, accurate answers" desc="Pulled straight from your company handbook." />
@@ -83,22 +84,22 @@ export default function LoginScreen() {
           </div>
         </div>
 
-        <div style={{ position: 'relative', color: 'rgba(255,255,255,.6)', fontSize: 12.5 }}>
-          © 2026 Kernel HR · Engineering Albania & Engineering Serbia
+        <div style={{ position: 'relative', color: 'var(--text-on-dark-subtle)', fontSize: 12.5 }}>
+          © 2026 {BRAND.company} · Engineering Albania &amp; Engineering Serbia
         </div>
       </div>
 
       {/* Sign-in panel */}
       <div style={{ flex: '1 1 50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
         <div style={{ width: '100%', maxWidth: 380 }}>
-          <img src="/logo-mark.svg" width="56" height="56" alt="Kernel HR" style={{ marginBottom: 24 }} />
+          <img src="/eng-mark.svg" width="52" height="52" alt={BRAND.name} style={{ marginBottom: 24, borderRadius: 'var(--radius-control)' }} />
 
           <h2 style={{
             fontSize: 28, fontWeight: 800, letterSpacing: '-.02em',
             color: 'var(--text-strong)', margin: '0 0 8px',
           }}>Welcome back</h2>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', lineHeight: 1.55, margin: '0 0 32px' }}>
-            Select your profile to start chatting with the Kernel HR Assistant.
+            Select your profile to start chatting with {BRAND.name}, the {BRAND.company} HR assistant.
           </p>
 
           {/* Profile selector */}

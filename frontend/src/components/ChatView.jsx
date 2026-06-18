@@ -5,6 +5,7 @@ import { Badge } from './ds/Badge'
 import { IconButton } from './ds/IconButton'
 import { ChatBubble } from './ds/ChatBubble'
 import { TypingIndicator } from './ds/TypingIndicator'
+import { BRAND } from '../brand'
 
 const SUGGESTIONS = [
   { icon: Palmtree,       text: 'How many vacation days do I have?' },
@@ -81,7 +82,7 @@ function Welcome({ user, onSuggestion }) {
     }}>
       <Avatar variant="ai" size="xl" style={{ marginBottom: 20, boxShadow: 'var(--shadow-brand)' }} />
       <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--text-strong)', margin: '0 0 8px' }}>
-        Hi {first}, I'm Kernel 👋
+        Hi {first}, I'm {BRAND.name} {BRAND.greetingEmoji}
       </h1>
       <p style={{ fontSize: 16, color: 'var(--text-muted)', lineHeight: 1.55, margin: '0 0 30px', maxWidth: 460 }}>
         Your HR questions, answered instantly from official company documents. Ask me anything, or pick a topic to get started.
@@ -155,7 +156,7 @@ function Composer({ onSend, disabled }) {
         <div style={{
           display: 'flex', alignItems: 'flex-end', gap: 8, padding: '8px 8px 8px 10px',
           background: 'var(--surface-card)', border: '1px solid var(--border-default)',
-          borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-md)',
+          borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-md)',
         }}>
           <IconButton label="Attach file" variant="ghost">
             <Paperclip size={18} />
@@ -188,7 +189,7 @@ function Composer({ onSend, disabled }) {
           </IconButton>
         </div>
         <p style={{ textAlign: 'center', fontSize: 11.5, color: 'var(--text-subtle)', margin: '10px 0 0' }}>
-          Kernel HR can make mistakes. Verify important details with People Ops.
+          {BRAND.name} can make mistakes. Verify important details with People Ops.
         </p>
       </div>
     </div>
@@ -216,11 +217,11 @@ export default function ChatView({ title, messages, typing, user, onSend }) {
         <Avatar variant="ai" size="sm" />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {empty ? 'Kernel HR Assistant' : title}
+            {empty ? `${BRAND.name} · ${BRAND.company} HR` : title}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)' }} />
-            Online · HR Assistant
+            Online · {BRAND.company} HR
           </div>
         </div>
         <Badge tone="brand">Beta</Badge>
@@ -252,7 +253,7 @@ export default function ChatView({ title, messages, typing, user, onSend }) {
                         {m.language.toUpperCase()}
                       </span>
                     )}
-                    <ChatBubble role="ai" name="Kernel HR" time={m.time}>
+                    <ChatBubble role="ai" name={BRAND.name} time={m.time}>
                       {m.refused
                         ? <em style={{ color: 'var(--danger)' }}>{m.reason || m.text}</em>
                         : m.text}
