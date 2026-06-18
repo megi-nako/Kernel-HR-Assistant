@@ -24,7 +24,7 @@ public class ScopeGuard {
 
     public ScopeGuard(RetrieverService retrieverService,
                       VectorStore vectorStore,
-                      @Value("${kernel.agent.scope-threshold:0.35}") double threshold) {
+                      @Value("${kernel.agent.scope-threshold:0.10}") double threshold) {
         this.retrieverService = retrieverService;
         this.vectorStore = vectorStore;
         this.threshold = threshold;
@@ -43,11 +43,14 @@ public class ScopeGuard {
         }
 
         List<RetrieverService.RetrievedChunk> results = retrieverService.retrieve(query, office, 1);
-        if (results.isEmpty() || results.get(0).score() < threshold) {
+        double bestScore = results.isEmpty() ? 0.0 : results.get(0).score();
+        log.debug("ScopeGuard check office={} threshold={} bestScore={} query='{}'",
+            office, threshold, bestScore, query);
+        if (results.isEmpty() || bestScore < threshold) {
             String refusal = "I can only help with HR questions for the " + office +
                              " office, based on our HR documents.";
             log.debug("ScopeGuard refused query for office={} (score={}): {}",
-                office, results.isEmpty() ? "n/a" : results.get(0).score(), query);
+                office, bestScore, query);
             return Optional.of(refusal);
         }
         return Optional.empty();
