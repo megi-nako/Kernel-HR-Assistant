@@ -1,11 +1,11 @@
 kernel:
   anthropic:
-    api-key: ${ANTHROPIC_API_KEY:}
+    api-key: ${ANTHROPIC_API_KEY}
     model: ${CLAUDE_MODEL:claude-opus-4-8}
 
   embedding:
     provider: ${EMBEDDING_PROVIDER:voyage}
-    voyage-api-key: ${VOYAGE_API_KEY:pa-PjTXcJ3cFQz1DAuKDS3Kuhfn2XtiwqWGMUTZNkoNMTa}
+    voyage-api-key: ${VOYAGE_API_KEY}
     model: ${EMBEDDING_MODEL:voyage-3}
 
   srb:
@@ -36,8 +36,8 @@ kernel:
 spring:
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/hrdb}
-    username: ${DATABASE_USER:postgres}
-    password: ${DATABASE_PASSWORD:admin}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
   sql:
     init:
       mode: always            # runs schema.sql on every startup (idempotent — uses IF NOT EXISTS)
