@@ -1,0 +1,2 @@
+2026-06-18T15:36:55.014107400Z | agathi@kernel.al | albania | refused | Q: What is the weather today? | A: [CONFIG] ANTHROPIC_API_KEY is not set. Add it to your environment and restart.
+2026-06-18T15:36:55.140533800Z | user@kernel.rs | serbia | refused | Q: Sa ditë pushimi kam në vit? | A: [CONFIG] ANTHROPIC_API_KEY is not set. Add it to your environment and restart.
