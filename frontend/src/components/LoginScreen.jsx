@@ -66,7 +66,7 @@ export default function LoginScreen() {
           border: '1px solid rgba(255,255,255,.06)', bottom: -90, left: -70, pointerEvents: 'none',
         }} />
 
-        <img src="/eng-logo.svg" height="36" alt={BRAND.company} style={{ position: 'relative' }} />
+        <img src="/eng-full-light.svg" height="30" alt={BRAND.company} style={{ position: 'relative' }} />
 
         <div style={{ position: 'relative', maxWidth: 400 }}>
           <h1 style={{
@@ -92,7 +92,7 @@ export default function LoginScreen() {
       {/* Sign-in panel */}
       <div style={{ flex: '1 1 50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
         <div style={{ width: '100%', maxWidth: 380 }}>
-          <img src="/eng-mark.svg" width="52" height="52" alt={BRAND.name} style={{ marginBottom: 24, borderRadius: 'var(--radius-control)' }} />
+          <img src="/eng-icon-dark.svg" height="46" alt={BRAND.company} style={{ marginBottom: 24, display: 'block' }} />
 
           <h2 style={{
             fontSize: 28, fontWeight: 800, letterSpacing: '-.02em',

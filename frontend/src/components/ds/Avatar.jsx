@@ -27,11 +27,7 @@ export function Avatar({ src, name, size = 'md', variant = 'user', status, style
         {src
           ? <img src={src} alt={name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : isAI
-            ? (
-              <svg width={dim * 0.5} height={dim * 0.5} viewBox="0 0 24 24" fill="none">
-                <path d="M12 3c1 5 3 7 8 8-5 1-7 3-8 8-1-5-3-7-8-8 5-1 7-3 8-8z" fill="#fff" />
-              </svg>
-            )
+            ? <img src="/eng-icon-light.svg" alt="" style={{ width: dim * 0.56, height: dim * 0.56, objectFit: 'contain' }} />
             : initialsOf(name)}
       </span>
       {status && (

@@ -60,7 +60,7 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
     }}>
       {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px 18px' }}>
-        <img src="/eng-logo.svg" height="26" alt="eng" />
+        <img src="/eng-full-light.svg" height="24" alt="eng" />
       </div>
 
       {/* New chat button */}
