@@ -45,6 +45,9 @@ public class SharePointClient {
         this.objectMapper = objectMapper;
         this.http = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(30))
+                // Graph's /content endpoint replies 302 to a pre-authenticated download URL;
+                // Java's HttpClient does NOT follow redirects unless told to (default is NEVER).
+                .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
 
@@ -119,7 +122,8 @@ public class SharePointClient {
                 .header("Authorization", "Bearer " + token)
                 .GET()
                 .build();
-        // Graph redirects to a download URL — HttpClient follows redirects by default
+        // Graph redirects (302) to a pre-authenticated download URL; the client is
+        // configured with Redirect.NORMAL so this is followed automatically.
         HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
         if (response.statusCode() != 200) {
             throw new RuntimeException("Download failed " + response.statusCode() + " for item " + itemId);
