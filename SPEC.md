@@ -16,7 +16,7 @@ Engineering Albania (Tirana) and Engineering Serbia (Belgrade) employees need in
 SOURCES (tagged by source, not language)
 ┌─────────────────────────────────┬─────────────────────────────────┐
 │ Albania → SharePoint (PDF/PPTX) │ Serbia → ZIP at SRB_ZIP_PATH     │
-│ (Graph Java SDK)                │ (configurable path) · 24 PDFs    │
+│ (Microsoft Graph REST API)      │ (configurable path) · 24 PDFs    │
 └─────────────────────────────────┴─────────────────────────────────┘
     │
     ▼ SourceService: {sharepoint | zip | localFolder}
@@ -24,10 +24,10 @@ Ingestion (Spring Boot)
 (DocumentLoader = Apache Tika → text; Indexer = chunk + embed)
     │  tags every chunk with office = serbia | albania
     ▼ Voyage AI embeddings (multilingual EN/SR/SQ) — embed once, persist
-In-memory Vector Store (persisted to data/index.json)
+PostgreSQL + pgvector  (chunks table, 1024-dim vectors)
     │
     ▼ cosine search  ── MANDATORY office filter ──
-Single Claude agent (Anthropic Java SDK, tool use)
+Single Claude agent (direct HTTP via java.net.http.HttpClient, tool use)
 ├── Tool: searchHrDocuments   (office bound server-side, not a tool arg)
 └── Tool: getDocumentMetadata
     │  scope gate: no grounded chunk → refuse (HR-only)
@@ -105,7 +105,7 @@ Your ONLY job is to answer HR questions using the documents retrieved for you vi
 
 | Component | Choice | Rationale |
 |-----------|--------|-----------|
-| LLM | Claude Opus 4.8 (`claude-opus-4-8`) via Anthropic Java SDK | Best reasoning + tool use; official Java SDK available; adaptive thinking |
+| LLM | Claude Opus 4.8 (`claude-opus-4-8`) via direct HTTP (`java.net.http.HttpClient`) | Best reasoning + tool use; direct REST avoids SDK dependency on company Nexus; adaptive thinking |
 | Embeddings | Voyage AI `voyage-3` (REST) | Multilingual (EN/SR/SQ); Anthropic has no embeddings endpoint; Python sentence-transformers unavailable |
 | Embedding fallback | DJL (Deep Java Library) with `paraphrase-multilingual-MiniLM-L12-v2` | Fully local, no API key, heavier; used when VOYAGE_API_KEY absent |
 
@@ -130,7 +130,7 @@ Reasons:
 - **Office filter:** Applied as a predicate *before* cosine ranking — other-office chunks never enter the scoring pool.
 - **k:** Top 5 chunks per tool call.
 - **Incremental upsert:** Chunk ID = `sourceId + ":" + lastModified + ":" + chunkIndex`. Only changed documents (new `lastModified`) are re-embedded on re-index.
-- **Persistence:** `data/index.json` — loaded into memory on startup; avoids re-ingesting on restart.
+- **Persistence:** PostgreSQL `chunks` table with `pgvector` extension — data survives restarts without reloading. Re-index via `--ingest=all` only when source documents change.
 
 ---
 
@@ -146,13 +146,37 @@ Reasons:
 ## 9. Security & Access Restrictions
 
 ### #1 — Office Isolation (Serbia ⇎ Albania)
-[TODO — Agathi: describe enforcement chain]
+
+Office is resolved **once at login** by `IdentityService.resolveOffice()`, which reads the authenticated user's Microsoft Graph profile (`positions[isCurrent].detail.company.displayName` → `albania` or `serbia`; city fallback: Tirana → albania, Beograd/Belgrade → serbia). If office cannot be resolved, login is rejected (fail-closed).
+
+The resolved office is stored in the server-side HTTP session (`session.setAttribute("office", ...)`). It is **never** sent by the client or accepted as a request parameter.
+
+At every `/api/chat` call, `ChatController` reads `office` directly from the session. This value is passed unchanged into:
+1. `ScopeGuard.check(query, office)` — retrieves only chunks tagged with that office
+2. `HrTools.execute(...)` — all tool calls receive the session office, not a model-supplied value
+3. `VectorStore.search(vector, office, k)` — the SQL query includes `WHERE office = ?` as a mandatory predicate applied before cosine ranking
+
+Other-office rows are physically excluded from the candidate set before any similarity scoring. There is no code path by which a model-generated office value can reach the database query.
 
 ### #2 — HR Scope Only
-[TODO — Agathi: describe grounding gate + system prompt enforcement]
+
+HR scope is enforced by two independent layers:
+
+**Layer 1 — ScopeGuard (pre-LLM gate):** Before the agent is invoked, `ScopeGuard.check(query, office)` embeds the user's question and retrieves the single best-matching chunk from the office's document index. If the cosine similarity is below the threshold (`kernel.agent.scope-threshold`, default 0.35), the query is refused immediately with a fixed message — the LLM is never called. This catches off-topic questions (weather, coding help, general knowledge) that have no semantic overlap with HR documents.
+
+If the vector index is empty (not yet ingested), the gate is bypassed with a WARN log so end-to-end testing works before ingestion is complete.
+
+**Layer 2 — System prompt (in-LLM enforcement):** The agent's system prompt instructs Claude to answer only from retrieved document excerpts, to refuse non-HR questions with a fixed phrase, and to never use its own knowledge. Even if a borderline query passes the cosine gate, the model is constrained by its instructions to ground every claim in a retrieved chunk or refuse.
+
+Together, the gate filters semantic mismatch and the system prompt handles edge cases the embedding similarity cannot catch (e.g., HR-sounding phrasing used for non-HR purposes).
 
 ### #3 — Internal Employees Only
-[TODO — Agathi: describe Spring Security session gate + Entra/mock auth]
+
+Authentication is handled by Spring Security session-based auth. On `POST /api/login`, `IdentityService.loadUser()` validates that the Microsoft Graph profile field `userPersona == "internalMember"`. Profiles that do not meet this condition are rejected with a 403 before a session is created.
+
+All non-public endpoints require an authenticated session (`SecurityConfig` returns 401 for unauthenticated requests to any path except `/api/login`, `/api/logout`, `/api/status`, `/api/users`, and preflight OPTIONS). `ChatController` additionally checks that the session contains an `office` attribute and returns 401 if it is absent — this means even a valid Spring Security session with no resolved office is rejected.
+
+In production, `AUTH_MODE=entra` connects to Microsoft Entra ID via MSAL4J client-credentials flow. For the demo, `AUTH_MODE=mock` reads a JSON file from `data/mock_profiles/` that mirrors the Graph API shape, allowing the same `IdentityService` validation code to run without a live Entra tenant.
 
 ---
 
