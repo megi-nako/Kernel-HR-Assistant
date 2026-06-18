@@ -7,6 +7,8 @@ const OFFICE_MAP = {
 const delay = (ms) => new Promise((r) => setTimeout(r, ms))
 
 let loggedInUser = null
+// In-memory conversation store so chat history works in mock mode too.
+let conversations = []
 
 export const listUsers = async () => {
   await delay(100)
@@ -23,6 +25,7 @@ export const login = async (username) => {
 export const logout = async () => {
   await delay(100)
   loggedInUser = null
+  conversations = []
 }
 
 export const chat = async (question, history = []) => {
@@ -46,4 +49,23 @@ export const status = async () => {
   return { office, docCount: 24, lastIndexed: '2026-06-18T10:00:00Z' }
 }
 
-export default { listUsers, login, logout, chat, status }
+export const listConversations = async () => {
+  await delay(50)
+  return conversations.map(({ id, title, updatedAt }) => ({ id, title, updatedAt }))
+}
+
+export const getConversation = async (id) => {
+  await delay(50)
+  return conversations.find((c) => c.id === id) ?? null
+}
+
+export const saveConversation = async (conv) => {
+  await delay(50)
+  const row = { id: conv.id, title: conv.title, messages: conv.messages, updatedAt: new Date().toISOString() }
+  const i = conversations.findIndex((c) => c.id === conv.id)
+  if (i >= 0) conversations[i] = row
+  else conversations.unshift(row)
+  return {}
+}
+
+export default { listUsers, login, logout, chat, status, listConversations, getConversation, saveConversation }

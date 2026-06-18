@@ -24,3 +24,20 @@ CREATE INDEX IF NOT EXISTS idx_chunks_office ON chunks (office);
 CREATE INDEX IF NOT EXISTS idx_chunks_vector_cosine
     ON chunks USING ivfflat (vector vector_cosine_ops)
     WITH (lists = 100);
+
+-- Persisted chat history. One row per conversation, owned by a user (upn).
+-- The full message list is stored as a JSONB array exactly as the frontend
+-- renders it (role, text, time, language, citations, refused, reason), so a
+-- conversation round-trips without a separate messages table.
+CREATE TABLE IF NOT EXISTS conversations (
+    id         VARCHAR(64)  PRIMARY KEY,
+    upn        VARCHAR(256) NOT NULL,
+    office     VARCHAR(50),
+    title      VARCHAR(512),
+    messages   JSONB        NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+
+-- List a user's conversations newest-first.
+CREATE INDEX IF NOT EXISTS idx_conversations_upn ON conversations (upn, updated_at DESC);

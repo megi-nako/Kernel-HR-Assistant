@@ -25,4 +25,10 @@ export const logout = () => req('POST', '/api/logout', {})
 export const chat = (question, history = []) => req('POST', '/api/chat', { question, history })
 export const status = () => req('GET', '/api/status')
 
-export default { listUsers, login, logout, chat, status }
+// Persisted chat history. The server scopes everything to the session user.
+export const listConversations = () => req('GET', '/api/conversations')
+export const getConversation = (id) => req('GET', `/api/conversations/${encodeURIComponent(id)}`)
+// conv = { id, title, messages } — upn/office come from the session, not the body.
+export const saveConversation = (conv) => req('POST', '/api/conversations', conv)
+
+export default { listUsers, login, logout, chat, status, listConversations, getConversation, saveConversation }
