@@ -76,10 +76,15 @@ public class HrAgentService {
     }
 
     public ChatResponse answer(String question, String language, String office) {
-        return answer(question, language, office, "anonymous");
+        return answer(question, language, office, "anonymous", List.of());
     }
 
     public ChatResponse answer(String question, String language, String office, String upn) {
+        return answer(question, language, office, upn, List.of());
+    }
+
+    public ChatResponse answer(String question, String language, String office, String upn,
+                               List<Map<String, String>> history) {
         // Guard: API key must be set
         String apiKey = props.getAnthropic().getApiKey();
         if (apiKey == null || apiKey.isBlank()) {
@@ -89,7 +94,7 @@ public class HrAgentService {
             return new ChatResponse(msg, language, List.of(), false, null);
         }
 
-        // Grounding gate (#2)
+        // Grounding gate (#2) — checks only the current question, never history
         Optional<String> refusal = scopeGuard.check(question, office);
         if (refusal.isPresent()) {
             auditService.log(upn, office, question, false, refusal.get());
@@ -97,7 +102,18 @@ public class HrAgentService {
         }
 
         String systemPrompt = SYSTEM_PROMPT_TEMPLATE.formatted(office, language, office, office);
+
+        // Build messages: prepend history (capped at 20 entries / 10 turns), then add current question.
+        // History items come from the client as [{role:"user"|"assistant", content:"..."}] pairs.
         List<Map<String, Object>> messages = new ArrayList<>();
+        if (history != null && !history.isEmpty()) {
+            List<Map<String, String>> capped = history.size() > 20
+                    ? history.subList(history.size() - 20, history.size())
+                    : history;
+            for (Map<String, String> turn : capped) {
+                messages.add(Map.of("role", turn.get("role"), "content", turn.get("content")));
+            }
+        }
         messages.add(Map.of("role", "user", "content", question));
 
         List<Citation> citations = new ArrayList<>();

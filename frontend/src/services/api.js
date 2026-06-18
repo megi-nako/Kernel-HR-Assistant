@@ -20,8 +20,9 @@ async function req(method, path, body) {
 export const listUsers = () => req('GET', '/api/users')
 export const login = (username) => req('POST', '/api/login', { username })
 export const logout = () => req('POST', '/api/logout', {})
-// office is NOT sent — backend reads it from the server session
-export const chat = (question) => req('POST', '/api/chat', { question })
+// office is NOT sent — backend reads it from the server session.
+// history is [{role:'user'|'assistant', content:'...'}] — complete pairs only, no refused turns.
+export const chat = (question, history = []) => req('POST', '/api/chat', { question, history })
 export const status = () => req('GET', '/api/status')
 
 export default { listUsers, login, logout, chat, status }

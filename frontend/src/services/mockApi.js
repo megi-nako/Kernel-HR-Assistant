@@ -25,7 +25,7 @@ export const logout = async () => {
   loggedInUser = null
 }
 
-export const chat = async (question) => {
+export const chat = async (question, history = []) => {
   await delay(800)
   const office = loggedInUser?.office ?? 'unknown'
   return {
