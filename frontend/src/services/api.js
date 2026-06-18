@@ -14,7 +14,11 @@ async function req(method, path, body) {
     err.status = res.status
     throw err
   }
-  return res.json()
+  // Some endpoints (logout, saveConversation) return 200/204 with an empty body.
+  // Calling res.json() on those throws "Unexpected end of JSON input", so guard for it.
+  if (res.status === 204) return null
+  const text = await res.text()
+  return text ? JSON.parse(text) : null
 }
 
 export const listUsers = () => req('GET', '/api/users')

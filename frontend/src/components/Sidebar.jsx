@@ -139,7 +139,10 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
             </div>
           </div>
           <button
-            onClick={async () => { await api.logout(); clearUser(); navigate('/login') }}
+            onClick={async () => {
+              try { await api.logout() } catch { /* clear client session regardless */ }
+              finally { clearUser(); navigate('/login') }
+            }}
             onMouseEnter={() => setHoverOut(true)}
             onMouseLeave={() => setHoverOut(false)}
             title="Sign out"

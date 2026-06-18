@@ -168,7 +168,7 @@ function Composer({ onSend, disabled }) {
             onChange={(e) => { setValue(e.target.value); grow(e.target) }}
             onKeyDown={onKey}
             disabled={disabled}
-            placeholder="Ask about HR policies, leave, benefits, payroll…"
+            placeholder="Ask about HR policies, leave, benefits…"
             style={{
               flex: 1, border: 'none', outline: 'none', resize: 'none',
               background: 'transparent', fontFamily: 'var(--font-sans)',
