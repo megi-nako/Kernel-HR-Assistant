@@ -63,6 +63,11 @@
             <artifactId>tika-parsers-standard-package</artifactId>
             <version>${tika.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-langdetect-optimaize</artifactId>
+            <version>${tika.version}</version>
+        </dependency>
 
         <!-- Microsoft Graph + MSAL4J (Albania SharePoint) -->
         <dependency>
