@@ -8,6 +8,9 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api")
 public class ChatController {
@@ -28,7 +31,9 @@ public class ChatController {
             return ResponseEntity.status(401).build();
         }
         String lang = languageDetector.detect(req.question());
-        ChatResponse response = agentService.answer(req.question(), lang, office, upn);
+        List<Map<String, String>> history =
+                req.history() != null ? req.history() : List.of();
+        ChatResponse response = agentService.answer(req.question(), lang, office, upn, history);
         return ResponseEntity.ok(response);
     }
 }
