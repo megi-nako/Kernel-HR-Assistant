@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17      # PostgreSQL 17 with pgvector pre-installed
+    container_name: hr-postgres
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB:       hrdb          # database created automatically on first start
+    ports:
+      - "5433:5432"
+    volumes:
+      - hr_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hrdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  hr_pgdata:
+    driver: local
