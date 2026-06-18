@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EVA — Engineering Virtual Assistant · Team Kernel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0f;
+      color: #fff;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ─── Slide container ─── */
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 48px 72px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ─── Shared chrome ─── */
+    .breadcrumb {
+      position: absolute;
+      top: 32px;
+      right: 64px;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.55);
+      font-weight: 500;
+    }
+    .breadcrumb span { color: #fff; }
+
+    .slide-num {
+      position: absolute;
+      top: 56px;
+      right: 64px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+      font-weight: 300;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 24px;
+      left: 64px;
+      right: 64px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.3);
+    }
+
+    .logo-eng {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: rgba(255,255,255,0.4);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 3px;
+      padding: 2px 6px;
+    }
+
+    .chapter-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 24px;
+      margin-top: 4px;
+    }
+
+    /* ─── Typography ─── */
+    .h-xl {
+      font-size: clamp(52px, 7vw, 88px);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+    .h-lg {
+      font-size: clamp(38px, 5.5vw, 68px);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+    .h-md {
+      font-size: clamp(28px, 3.5vw, 46px);
+      font-weight: 300;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .bold { font-weight: 700; }
+    .cyan  { color: #00d4e8; }
+    .magenta { color: #e8007c; }
+    .purple { color: #7c6cf0; }
+    .body-text {
+      font-size: 14px;
+      line-height: 1.65;
+      color: rgba(255,255,255,0.7);
+      max-width: 540px;
+    }
+
+    /* ─── Divider ─── */
+    hr.rule {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      margin: 20px 0;
+    }
+
+    /* ─── Three-column grid ─── */
+    .col3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border: 1px solid rgba(255,255,255,0.1);
+      margin-top: 32px;
+      flex: 1;
+    }
+    .col3-item {
+      padding: 32px 28px;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+    .col3-item:last-child { border-right: none; }
+
+    .col3-num {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .col3-tag {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .col3-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .col3-body {
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* ─── SLIDE 1: Cover ─── */
+    #s1 {
+      background: linear-gradient(135deg, #0d0020 0%, #0a001a 40%, #00070d 100%);
+    }
+    #s1::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 80% 40%, rgba(100,40,200,0.25) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 20% 70%, rgba(0,180,220,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cover-meta {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 20px;
+    }
+    .cover-title {
+      font-size: clamp(80px, 12vw, 140px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      background: linear-gradient(135deg, #ffffff 0%, #c0b0ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .cover-subtitle {
+      font-size: clamp(16px, 2vw, 22px);
+      font-weight: 300;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 12px;
+      margin-bottom: 56px;
+    }
+    .team-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      border-left: 2px solid #e8007c;
+      padding-left: 10px;
+      margin-bottom: 10px;
+    }
+    .team-name {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+    .contributors {
+      display: flex;
+      gap: 40px;
+    }
+    .contributor {
+      display: flex;
+      flex-direction: column;
+    }
+    .contributor-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+    }
+
+    /* ─── SLIDE 2: Architecture ─── */
+    #s2 {
+      background: #fff;
+      color: #111;
+    }
+    #s2 .breadcrumb { color: rgba(0,0,0,0.4); }
+    #s2 .breadcrumb span { color: #111; }
+    #s2 .slide-num { color: rgba(0,0,0,0.3); }
+    #s2 .chapter-label { color: rgba(0,0,0,0.35); }
+    #s2 .h-lg { color: #111; }
+    #s2 .footer { color: rgba(0,0,0,0.3); }
+    #s2 .logo-eng { color: rgba(0,0,0,0.4); border-color: rgba(0,0,0,0.2); }
+    #s2 hr.rule { border-color: rgba(0,0,0,0.1); }
+    #s2 .col3 { border-color: rgba(0,0,0,0.1); }
+    #s2 .col3-item { border-color: rgba(0,0,0,0.1); }
+    #s2 .col3-tag { color: rgba(0,0,0,0.35); }
+    #s2 .col3-title { color: #111; }
+    #s2 .col3-body { color: rgba(0,0,0,0.55); }
+
+    .arch-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 28px;
+    }
+    .arch-box {
+      padding: 20px 24px;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    .arch-box-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: rgba(0,0,0,0.35);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .arch-box-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 8px;
+    }
+    .arch-box-body {
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(0,0,0,0.55);
+    }
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .tag {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+    }
+    .tag-cyan  { background: rgba(0,180,220,0.12); color: #007a9e; }
+    .tag-mag   { background: rgba(232,0,124,0.1); color: #b0005e; }
+    .tag-purple{ background: rgba(124,108,240,0.12); color: #4a3db0; }
+    .tag-dark  { background: rgba(0,0,0,0.06); color: rgba(0,0,0,0.6); }
+
+    .llm-highlight {
+      background: linear-gradient(135deg, #f0eeff 0%, #e8f8ff 100%);
+      border: 1px solid rgba(124,108,240,0.25);
+      padding: 16px 20px;
+      margin-top: 16px;
+    }
+    .llm-highlight-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      color: #4a3db0;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .llm-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .llm-entry {
+      display: flex;
+      flex-direction: column;
+    }
+    .llm-entry-role {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: rgba(0,0,0,0.4);
+      text-transform: uppercase;
+    }
+    .llm-entry-model {
+      font-size: 13px;
+      font-weight: 700;
+      color: #4a3db0;
+    }
+
+    /* ─── SLIDE 3: Security ─── */
+    #s3 {
+      background: #fff;
+      color: #111;
+    }
+    #s3 .breadcrumb { color: rgba(0,0,0,0.4); }
+    #s3 .breadcrumb span { color: #111; }
+    #s3 .slide-num { color: rgba(0,0,0,0.3); }
+    #s3 .chapter-label { color: rgba(0,0,0,0.35); }
+    #s3 .footer { color: rgba(0,0,0,0.3); }
+    #s3 .logo-eng { color: rgba(0,0,0,0.4); border-color: rgba(0,0,0,0.2); }
+    #s3 hr.rule { border-color: rgba(0,0,0,0.1); }
+
+    .security-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 32px;
+      margin-top: 28px;
+      flex: 1;
+    }
+    .sec-main {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sec-rule {
+      padding: 20px 24px;
+      border-left: 3px solid;
+    }
+    .sec-rule.r-alb { border-color: #e8007c; background: rgba(232,0,124,0.04); }
+    .sec-rule.r-srb { border-color: #7c6cf0; background: rgba(124,108,240,0.04); }
+    .sec-rule.r-deny { border-color: #ff4444; background: rgba(255,68,68,0.04); }
+    .sec-rule-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .r-alb .sec-rule-label { color: #b0005e; }
+    .r-srb .sec-rule-label { color: #4a3db0; }
+    .r-deny .sec-rule-label { color: #cc0000; }
+    .sec-rule-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .sec-rule-body {
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(0,0,0,0.55);
+    }
+
+    .sec-side {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sec-flow {
+      background: #f7f7fb;
+      border: 1px solid rgba(0,0,0,0.08);
+      padding: 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      flex: 1;
+    }
+    .sec-flow-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.35);
+      margin-bottom: 14px;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+    }
+    .flow-step:last-child { border-bottom: none; }
+    .flow-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .dot-mag { background: #e8007c; color: #fff; }
+    .dot-purple { background: #7c6cf0; color: #fff; }
+    .dot-cyan { background: #00a8c0; color: #fff; }
+    .dot-dark { background: #222; color: #fff; }
+    .flow-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: rgba(0,0,0,0.6);
+    }
+    .flow-text strong { color: #111; }
+
+    /* ─── SLIDE 4: Ingestion ─── */
+    #s4 {
+      background: #fff;
+      color: #111;
+    }
+    #s4 .breadcrumb { color: rgba(0,0,0,0.4); }
+    #s4 .breadcrumb span { color: #111; }
+    #s4 .slide-num { color: rgba(0,0,0,0.3); }
+    #s4 .chapter-label { color: rgba(0,0,0,0.35); }
+    #s4 .footer { color: rgba(0,0,0,0.3); }
+    #s4 .logo-eng { color: rgba(0,0,0,0.4); border-color: rgba(0,0,0,0.2); }
+    #s4 hr.rule { border-color: rgba(0,0,0,0.1); }
+    #s4 .col3 { border-color: rgba(0,0,0,0.1); }
+    #s4 .col3-item { border-color: rgba(0,0,0,0.1); }
+    #s4 .col3-tag { color: rgba(0,0,0,0.35); }
+    #s4 .col3-title { color: #111; }
+    #s4 .col3-body { color: rgba(0,0,0,0.55); }
+
+    .pipeline-strip {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin-top: 24px;
+      border: 1px solid rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .pipe-step {
+      flex: 1;
+      padding: 20px 18px;
+      border-right: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    .pipe-step:last-child { border-right: none; }
+    .pipe-num {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .pipe-tag {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.35);
+      margin-bottom: 8px;
+    }
+    .pipe-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 6px;
+    }
+    .pipe-body {
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: rgba(0,0,0,0.55);
+    }
+    .pipe-arrow {
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      color: rgba(0,0,0,0.2);
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .chat-history-box {
+      background: linear-gradient(135deg, #f0eeff 0%, #fff 100%);
+      border: 1px solid rgba(124,108,240,0.2);
+      padding: 18px 22px;
+      margin-top: 16px;
+      display: flex;
+      gap: 28px;
+    }
+    .chat-hist-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #4a3db0;
+      margin-bottom: 6px;
+    }
+    .chat-hist-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .chat-hist-body {
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(0,0,0,0.55);
+    }
+    .chat-hist-reasons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      justify-content: center;
+      min-width: 220px;
+    }
+    .reason-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(0,0,0,0.6);
+    }
+    .reason-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #7c6cf0;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    /* ─── SLIDE 5: Closing ─── */
+    #s5 {
+      background: linear-gradient(135deg, #0d0020 0%, #0a001a 40%, #00070d 100%);
+    }
+    #s5::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 50% 60% at 85% 30%, rgba(0,180,220,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 15% 80%, rgba(232,0,124,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .highlights-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-top: 32px;
+      flex: 1;
+    }
+    .hl-card {
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 24px 22px;
+      display: flex;
+      flex-direction: column;
+    }
+    .hl-icon {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+    .hl-tag {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 8px;
+    }
+    .hl-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .hl-body {
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.55);
+    }
+    .big-closing {
+      margin-top: auto;
+      padding-top: 20px;
+    }
+
+    /* ─── Navigation ─── */
+    .nav {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+    }
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      cursor: pointer;
+      transition: background 0.2s;
+      border: none;
+    }
+    .nav-dot.active { background: #fff; }
+    .nav-dot-dark { background: rgba(0,0,0,0.15); }
+    .nav-dot-dark.active { background: #111; }
+
+    .arrow-btn {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 28px;
+      color: rgba(255,255,255,0.3);
+      z-index: 100;
+      padding: 12px;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    .arrow-btn:hover { color: rgba(255,255,255,0.8); }
+    .arrow-btn.light { color: rgba(0,0,0,0.2); }
+    .arrow-btn.light:hover { color: rgba(0,0,0,0.7); }
+    .arrow-prev { left: 16px; }
+    .arrow-next { right: 16px; }
+
+    /* ─── Fullscreen button ─── */
+    .fs-btn {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 4px;
+      color: rgba(255,255,255,0.55);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      padding: 4px 12px;
+      cursor: pointer;
+      z-index: 200;
+      transition: background 0.2s, color 0.2s;
+      font-family: inherit;
+    }
+    .fs-btn:hover { background: rgba(255,255,255,0.16); color: #fff; }
+    .fs-btn.light {
+      background: rgba(0,0,0,0.05);
+      border-color: rgba(0,0,0,0.15);
+      color: rgba(0,0,0,0.4);
+    }
+    .fs-btn.light:hover { background: rgba(0,0,0,0.1); color: #111; }
+    :fullscreen .fs-btn, :-webkit-full-screen .fs-btn { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 1 · COVER
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide active" id="s1">
+    <div class="breadcrumb">ENGINEERING / <span>PRESENTATION</span></div>
+    <div class="slide-num">01 / 05</div>
+
+    <div style="margin-top: 64px; position: relative; z-index: 1;">
+      <div class="cover-meta">HACKATHON 2026 · MULTILINGUAL HR ASSISTANT · TEAM KERNEL</div>
+      <div class="cover-title">EVA</div>
+      <div class="cover-subtitle">Engineering Virtual Assistant</div>
+
+      <div class="team-label">BUILT BY</div>
+      <div class="team-name">Team <span class="cyan">Kernel</span></div>
+
+      <div class="contributors">
+        <div class="contributor">
+          <span class="contributor-name">Megi Nako</span>
+        </div>
+        <div class="contributor">
+          <span class="contributor-name">Agathi Drago</span>
+        </div>
+        <div class="contributor">
+          <span class="contributor-name">Loerti Shahini</span>
+        </div>
+        <div class="contributor">
+          <span class="contributor-name">Urim Toshi</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="logo-eng">eng</span>
+      <span>Software Lab · HR Chatbot Hackathon</span>
+      <span>01 / 05</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 2 · ARCHITECTURE & TECH
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide" id="s2">
+    <div class="breadcrumb">ENGINEERING / <span>ARCHITECTURE</span></div>
+    <div class="slide-num">02 / 05</div>
+
+    <div style="margin-top:72px;">
+      <div class="chapter-label">CHAPTER 01 · HOW EVA IS BUILT</div>
+      <div class="h-lg" style="color:#111;">System <strong class="bold">architecture.</strong></div>
+    </div>
+
+    <div class="arch-top">
+      <div class="arch-box">
+        <div class="arch-box-label">Frontend</div>
+        <div class="arch-box-title">Angular</div>
+        <div class="arch-box-body">
+          Single-page app with Angular Router. Chat interface, citation panel, language badge, suggestion cards, and session sidebar — built with Angular's component architecture and reactive forms.
+        </div>
+        <div class="tag-row">
+          <span class="tag tag-cyan">Angular</span>
+          <span class="tag tag-dark">Angular Router</span>
+          <span class="tag tag-dark">Angular CLI</span>
+          <span class="tag tag-dark">TypeScript</span>
+        </div>
+      </div>
+      <div class="arch-box">
+        <div class="arch-box-label">Backend</div>
+        <div class="arch-box-title">Spring Boot 3 · Java 17</div>
+        <div class="arch-box-body">
+          REST API with Spring Security for identity &amp; office scoping. Microsoft Graph + MSAL4J for SharePoint ingestion. Apache Tika for multi-format text extraction (PDF, PPTX, DOCX).
+        </div>
+        <div class="tag-row">
+          <span class="tag tag-mag">Spring Boot 3.3</span>
+          <span class="tag tag-dark">Java 17</span>
+          <span class="tag tag-dark">Apache Tika</span>
+          <span class="tag tag-dark">MS Graph API</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="llm-highlight">
+      <div class="llm-highlight-label">LLMs &amp; Embeddings — the intelligence layer</div>
+      <div class="llm-row">
+        <div class="llm-entry">
+          <span class="llm-entry-role">Answer generation</span>
+          <span class="llm-entry-model">Claude Opus 4.8</span>
+        </div>
+        <div style="width:1px;background:rgba(0,0,0,0.1);margin:0 4px;"></div>
+        <div class="llm-entry">
+          <span class="llm-entry-role">Language detection</span>
+          <span class="llm-entry-model">Apache Tika langdetect</span>
+        </div>
+        <div style="width:1px;background:rgba(0,0,0,0.1);margin:0 4px;"></div>
+        <div class="llm-entry">
+          <span class="llm-entry-role">Semantic embeddings</span>
+          <span class="llm-entry-model">Voyage AI · voyage-3</span>
+        </div>
+        <div style="width:1px;background:rgba(0,0,0,0.1);margin:0 4px;"></div>
+        <div class="llm-entry">
+          <span class="llm-entry-role">Vector store</span>
+          <span class="llm-entry-model">PostgreSQL + pgvector</span>
+        </div>
+        <div style="width:1px;background:rgba(0,0,0,0.1);margin:0 4px;"></div>
+        <div class="llm-entry">
+          <span class="llm-entry-role">Infrastructure</span>
+          <span class="llm-entry-model">Docker Compose</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="logo-eng">eng</span>
+      <span>Software Lab · HR Chatbot Hackathon</span>
+      <span>02 / 05</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 3 · SECURITY & DATA ISOLATION
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide" id="s3">
+    <div class="breadcrumb">ENGINEERING / <span>SECURITY</span></div>
+    <div class="slide-num">03 / 05</div>
+
+    <div style="margin-top:72px;">
+      <div class="chapter-label">CHAPTER 02 · DATA ISOLATION</div>
+      <div class="h-lg" style="color:#111;">Your office. <strong class="bold" style="color:#e8007c;">Your answers only.</strong></div>
+    </div>
+
+    <div class="security-grid">
+      <div class="sec-main">
+        <p style="font-size:13.5px;line-height:1.7;color:rgba(0,0,0,0.6);margin-bottom:4px;">
+          Every authenticated user carries an <strong style="color:#111;">office identity</strong> — either Albania or Serbia. The retrieval layer enforces a hard namespace boundary: queries are matched only against documents tagged to that user's office.
+        </p>
+
+        <div class="sec-rule r-alb">
+          <div class="sec-rule-label">Albania Office</div>
+          <div class="sec-rule-title">User in Tirana asks a question</div>
+          <div class="sec-rule-body">Search is scoped to the <strong>ALB</strong> namespace. Albanian HR documents only. Serbian content is never retrieved, never surfaced.</div>
+        </div>
+
+        <div class="sec-rule r-srb">
+          <div class="sec-rule-label">Serbia Office</div>
+          <div class="sec-rule-title">User in Belgrade asks the same question</div>
+          <div class="sec-rule-body">Search is scoped to the <strong>SRB</strong> namespace. Serbian HR documents only. Completely independent from Albanian content.</div>
+        </div>
+
+        <div class="sec-rule r-deny">
+          <div class="sec-rule-label">Cross-office attempt</div>
+          <div class="sec-rule-title">Can a Serbian user access Albanian documents?</div>
+          <div class="sec-rule-body"><strong>No.</strong> The vector search filter is enforced at query time on the database level — there is no API surface to override the office scope. Answers are grounded only in the right country's materials.</div>
+        </div>
+      </div>
+
+      <div class="sec-side">
+        <div class="sec-flow">
+          <div class="sec-flow-label">How isolation is enforced — request flow</div>
+          <div class="flow-step">
+            <div class="flow-dot dot-mag">1</div>
+            <div class="flow-text"><strong>Spring Security</strong> resolves the authenticated user's office from their profile (mock or real)</div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot dot-purple">2</div>
+            <div class="flow-text"><strong>Voyage AI</strong> embeds the user's query into a 1024-dim vector</div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot dot-cyan">3</div>
+            <div class="flow-text"><strong>pgvector</strong> cosine search is filtered by <code style="font-size:11px;background:rgba(0,0,0,0.05);padding:1px 4px;">office = 'ALB'</code> or <code style="font-size:11px;background:rgba(0,0,0,0.05);padding:1px 4px;">office = 'SRB'</code></div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot dot-dark">4</div>
+            <div class="flow-text"><strong>Claude Opus 4.8</strong> receives only the retrieved office-scoped chunks as context and generates the answer</div>
+          </div>
+          <div class="flow-step">
+            <div class="flow-dot dot-dark">5</div>
+            <div class="flow-text">Audit log records every query, user, office, and cited sources for compliance tracking</div>
+          </div>
+        </div>
+
+        <div style="padding:16px 20px;background:#f7f7f7;border:1px solid rgba(0,0,0,0.08);">
+          <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(0,0,0,0.35);margin-bottom:6px;">Multilingual response</div>
+          <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:4px;">Detects &amp; replies in your language</div>
+          <div style="font-size:12px;line-height:1.6;color:rgba(0,0,0,0.55);">Ask in English, Albanian, or Serbian. Tika detects the input language and Claude replies in kind — no configuration needed.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="logo-eng">eng</span>
+      <span>Software Lab · HR Chatbot Hackathon</span>
+      <span>03 / 05</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 4 · INGESTION PIPELINE + CHAT HISTORY
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide" id="s4">
+    <div class="breadcrumb">ENGINEERING / <span>INGESTION</span></div>
+    <div class="slide-num">04 / 05</div>
+
+    <div style="margin-top:72px;">
+      <div class="chapter-label">CHAPTER 03 · KNOWLEDGE PIPELINE</div>
+      <div class="h-lg" style="color:#111;">From document <strong class="bold">to answer.</strong></div>
+    </div>
+
+    <div class="pipeline-strip">
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:#e8007c;">01</div>
+        <div class="pipe-tag">Source</div>
+        <div class="pipe-title">Fetch documents</div>
+        <div class="pipe-body">Ingestion job pulls HR documents from <strong>SharePoint</strong> (Albania via MS Graph API), a <strong>ZIP archive</strong> (Serbia), or a local <strong>folder</strong>. Configurable per office via environment variable.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:#7c6cf0;">02</div>
+        <div class="pipe-tag">Parse</div>
+        <div class="pipe-title">Extract with Tika</div>
+        <div class="pipe-body"><strong>Apache Tika 2.9</strong> parses PDFs, PPTX, DOCX, and plain text into clean strings. Language is detected at this stage and stored as document metadata.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:#00a8c0;">03</div>
+        <div class="pipe-tag">Chunk &amp; Embed</div>
+        <div class="pipe-title">Vectorize</div>
+        <div class="pipe-body">Text chunks are sent to <strong>Voyage AI voyage-3</strong> for 1024-dimension semantic embeddings. Each vector is tagged with office, source filename, and language.</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num" style="color:#444;">04</div>
+        <div class="pipe-tag">Persist</div>
+        <div class="pipe-title">Store in PostgreSQL</div>
+        <div class="pipe-body">Embeddings land in a <strong>pgvector-enabled PostgreSQL</strong> instance running in Docker. The vector column enables cosine similarity search at query time without any external search engine.</div>
+      </div>
+    </div>
+
+    <div class="chat-history-box">
+      <div style="flex:1;">
+        <div class="chat-hist-label">Chat History</div>
+        <div class="chat-hist-title">Persistent conversation context — per session, per user</div>
+        <div class="chat-hist-body">
+          Every message exchange is persisted to PostgreSQL, keyed by session ID and user. When the next message arrives, recent history is injected into the Claude prompt as context window — enabling follow-up questions, pronoun resolution, and coherent multi-turn conversations without repeating information.
+        </div>
+      </div>
+      <div class="chat-hist-reasons">
+        <div class="reason-item"><div class="reason-dot"></div><span><strong>Continuity</strong> — "What about the Serbia version?" works across turns</span></div>
+        <div class="reason-item"><div class="reason-dot"></div><span><strong>Faster UX</strong> — context is cached in DB, no re-fetch from SharePoint per turn</span></div>
+        <div class="reason-item"><div class="reason-dot"></div><span><strong>Auditability</strong> — full conversation trail for compliance review</span></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="logo-eng">eng</span>
+      <span>Software Lab · HR Chatbot Hackathon</span>
+      <span>04 / 05</span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 5 · HIGHLIGHTS & CLOSING
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide" id="s5">
+    <div class="breadcrumb" style="color:rgba(255,255,255,0.4);">ENGINEERING / <span>HIGHLIGHTS</span></div>
+    <div class="slide-num">05 / 05</div>
+
+    <div style="margin-top:72px;position:relative;z-index:1;">
+      <div class="chapter-label">CHAPTER 04 · WHAT SETS EVA APART</div>
+      <div class="h-lg">What makes <span class="cyan bold">EVA</span> stand out.</div>
+    </div>
+
+    <div class="highlights-grid" style="position:relative;z-index:1;">
+      <div class="hl-card">
+        <div class="hl-tag">Intelligence</div>
+        <div class="hl-title">Claude Opus 4.8 as the brain</div>
+        <div class="hl-body">The most capable Claude model drives every answer — not a lightweight summarizer. Tool-use agent architecture with configurable scope threshold ensures the LLM only answers when retrieval confidence is high enough.</div>
+      </div>
+      <div class="hl-card">
+        <div class="hl-tag">Security</div>
+        <div class="hl-title">Hard office isolation at DB level</div>
+        <div class="hl-body">Cross-office data leakage is structurally impossible. The pgvector WHERE clause filter is enforced server-side, below the application layer — not just hidden in the UI.</div>
+      </div>
+      <div class="hl-card">
+        <div class="hl-tag">Retrieval</div>
+        <div class="hl-title">Voyage AI semantic search</div>
+        <div class="hl-body">voyage-3 embeddings outperform generic models on multilingual domain text. Semantic similarity means users get correct answers even when phrasing doesn't match the document keywords.</div>
+      </div>
+      <div class="hl-card">
+        <div class="hl-tag">Pipeline</div>
+        <div class="hl-title">Flexible ingestion sources</div>
+        <div class="hl-body">One ingestion runner handles SharePoint, ZIP, and local folders — configurable per office. Adding a new office or document source requires a single environment variable change.</div>
+      </div>
+      <div class="hl-card">
+        <div class="hl-tag">Multilingual</div>
+        <div class="hl-title">EN · SQ · SR — detect &amp; reply</div>
+        <div class="hl-body">Language detection at both ingestion time (Tika) and query time. The LLM receives language context in its system prompt and responds in whichever language the user wrote in.</div>
+      </div>
+      <div class="hl-card">
+        <div class="hl-tag">Production-ready</div>
+        <div class="hl-title">Audit log + Docker + Spring Security</div>
+        <div class="hl-body">Every query, user, office, and cited source is logged. Full Docker Compose setup means zero-friction deployment. Spring Security provides a real auth layer ready to swap mock profiles for SSO.</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="logo-eng">eng</span>
+      <span>Software Lab · HR Chatbot Hackathon</span>
+      <span>05 / 05</span>
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<!-- Fullscreen button -->
+<button class="fs-btn" id="fsBtn" onclick="toggleFullscreen()">&#x26F6; FULLSCREEN &nbsp;·&nbsp; F</button>
+
+<!-- Navigation dots -->
+<div class="nav" id="nav"></div>
+
+<!-- Arrow buttons -->
+<button class="arrow-btn arrow-prev" id="prev" onclick="go(-1)">&#8249;</button>
+<button class="arrow-btn arrow-next" id="next" onclick="go(1)">&#8250;</button>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const navEl  = document.getElementById('nav');
+  let cur = 0;
+
+  const lightSlides = new Set([1,2,3]); // 0-indexed slides with white background
+
+  function buildNav() {
+    slides.forEach((_, i) => {
+      const b = document.createElement('button');
+      b.className = 'nav-dot';
+      b.onclick = () => goTo(i);
+      navEl.appendChild(b);
+    });
+  }
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = (n + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    updateNav();
+    updateArrows();
+  }
+
+  function go(dir) { goTo(cur + dir); }
+
+  function updateNav() {
+    navEl.querySelectorAll('.nav-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === cur);
+      d.classList.toggle('nav-dot-dark', lightSlides.has(cur));
+    });
+  }
+
+  function updateArrows() {
+    const isLight = lightSlides.has(cur);
+    document.getElementById('prev').className = `arrow-btn arrow-prev${isLight ? ' light' : ''}`;
+    document.getElementById('next').className = `arrow-btn arrow-next${isLight ? ' light' : ''}`;
+    document.getElementById('fsBtn').className = `fs-btn${isLight ? ' light' : ''}`;
+  }
+
+  // ─── Fullscreen ────────────────────────────────────────
+  function toggleFullscreen() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      const el = document.documentElement;
+      if (el.requestFullscreen)       el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } else {
+      if (document.exitFullscreen)       document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); go(-1); }
+    if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+    if (e.key === 'Escape' && document.fullscreenElement) document.exitFullscreen();
+  });
+
+  // Auto-enter fullscreen when file is opened directly (after a user gesture isn't possible on load,
+  // so we just make the button prominent — clicking it or pressing F enters fullscreen)
+  document.addEventListener('fullscreenchange', () => {
+    const btn = document.getElementById('fsBtn');
+    if (document.fullscreenElement) {
+      btn.innerHTML = '&#x2715; EXIT FULLSCREEN &nbsp;·&nbsp; ESC';
+    } else {
+      btn.innerHTML = '&#x26F6; FULLSCREEN &nbsp;·&nbsp; F';
+    }
+  });
+
+  buildNav();
+  updateNav();
+  updateArrows();
+</script>
+</body>
+</html>
