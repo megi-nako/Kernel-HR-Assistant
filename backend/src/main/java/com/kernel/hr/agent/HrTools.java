@@ -28,13 +28,20 @@ public class HrTools {
             "description",
                 "Search indexed HR documents for the authenticated user's office. " +
                 "Returns the most relevant excerpts with source metadata. " +
-                "The office is bound server-side and is NOT a parameter — you cannot change it.",
+                "The office is bound server-side and is NOT a parameter — you cannot change it. " +
+                "IMPORTANT: Use concise keyword-focused queries, NOT full question sentences. " +
+                "Extract the core topic from the user's question. " +
+                "Examples: prefer 'RAS internal system' over 'Šta znate o RAS-u', " +
+                "'godišnji odmor dani' over 'Koliko dana godišnjeg odmora imam', " +
+                "'sick leave bolovanje' over 'How do I apply for sick leave'. " +
+                "If you suspect content may exist in multiple languages, call this tool " +
+                "a second time with an alternative keyword formulation.",
             "input_schema", Map.of(
                 "type", "object",
                 "properties", Map.of(
                     "query", Map.of(
                         "type", "string",
-                        "description", "The search query in any supported language (EN/SR/SQ)."
+                        "description", "Short keyword query (3-6 words) in EN, SR, or SQ — NOT a full question sentence."
                     )
                 ),
                 "required", List.of("query")
