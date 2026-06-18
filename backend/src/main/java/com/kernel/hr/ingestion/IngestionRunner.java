@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,17 +19,19 @@ public class IngestionRunner implements ApplicationRunner {
     private final SourceService sourceService;
     private final Indexer indexer;
     private final VectorStore vectorStore;
+    private final ApplicationContext applicationContext;
 
-    public IngestionRunner(SourceService sourceService, Indexer indexer, VectorStore vectorStore) {
+    public IngestionRunner(SourceService sourceService, Indexer indexer,
+                           VectorStore vectorStore, ApplicationContext applicationContext) {
         this.sourceService = sourceService;
         this.indexer = indexer;
         this.vectorStore = vectorStore;
+        this.applicationContext = applicationContext;
     }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
         if (!args.containsOption("ingest")) {
-            vectorStore.load();
             return;
         }
 
@@ -38,10 +42,11 @@ public class IngestionRunner implements ApplicationRunner {
         String target = values.get(0);
 
         List<String> offices = switch (target) {
-            case "serbia" -> List.of("serbia");
+            case "serbia"  -> List.of("serbia");
             case "albania" -> List.of("albania");
-            case "all" -> List.of("serbia", "albania");
-            default -> throw new IllegalArgumentException("--ingest must be serbia|albania|all, got: " + target);
+            case "all"     -> List.of("serbia", "albania");
+            default -> throw new IllegalArgumentException(
+                    "--ingest must be serbia|albania|all, got: " + target);
         };
 
         for (String office : offices) {
@@ -49,7 +54,12 @@ public class IngestionRunner implements ApplicationRunner {
             List<SourceDoc> docs = sourceService.iterDocuments(office);
             log.info("Found {} documents for office: {}", docs.size(), office);
             indexer.index(docs);
-            log.info("Ingestion complete for {}. Chunks: {}", office, vectorStore.countByOffice(office));
+            log.info("Ingestion complete for {}. Total chunks: {}", office,
+                    vectorStore.countByOffice(office));
         }
+
+        // Exit cleanly after ingestion — no reason to keep the web server running.
+        log.info("Ingestion finished. Shutting down.");
+        System.exit(SpringApplication.exit(applicationContext, () -> 0));
     }
 }
