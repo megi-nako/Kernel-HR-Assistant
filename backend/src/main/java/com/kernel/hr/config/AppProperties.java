@@ -68,7 +68,7 @@ public class AppProperties {
     }
 
     public static class Alb {
-        private String source = "sharepoint";
+        private String source = "folder";
         private String zipPath = "";
         private String folderPath = "";
         public String getSource() { return source; }

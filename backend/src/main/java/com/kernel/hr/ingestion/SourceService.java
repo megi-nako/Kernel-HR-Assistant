@@ -61,7 +61,7 @@ public class SourceService {
     }
 
     private List<SourceDoc> loadAlbania() {
-        String source = props.getAlb().getSource();
+        String source = "folder";//props.getAlb().getSource();
         log.info("Loading Albania documents via source: {}", source);
         return switch (source) {
             case "sharepoint" -> {

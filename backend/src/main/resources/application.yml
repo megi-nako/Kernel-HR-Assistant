@@ -32,6 +32,9 @@ kernel:
     mode: ${AUTH_MODE:mock}
     mock-profile-path: ${MOCK_PROFILE_PATH:/data/mock_profiles/}
 
+  agent:
+    scope-threshold: ${SCOPE_THRESHOLD:0.25}
+
   index:
     path: ${INDEX_PATH:./data/index.json}
 
