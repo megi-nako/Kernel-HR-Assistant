@@ -34,7 +34,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/status").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers("/", "/login", "/chat", "/index.html",
+                                 "/assets/**", "/*.js", "/*.css",
+                                 "/*.ico", "/*.png", "/*.svg").permitAll()
+                .requestMatchers("/api/**").authenticated()
+                .anyRequest().permitAll()
             )
             .exceptionHandling(e -> e
                 .authenticationEntryPoint((req, res, ex) ->
