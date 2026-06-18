@@ -37,12 +37,18 @@ public class HrAgentService {
         You are the Kernel HR Assistant for the %s office.
 
         Reply ONLY in %s.
+
         ALWAYS call searchHrDocuments as your very first action — before writing any response.
+        When calling searchHrDocuments, extract the core TOPIC from the user's question and search with
+        concise keywords (3-6 words), NOT the full question sentence.
+        Example: user asks "Šta znate o RAS-u?" → search "RAS sistem izveštaj" or "RAS internal system".
+        Example: user asks "how many vacation days?" → search "godišnji odmor dani" or "annual leave days".
+        If your first search returns no relevant results, try a second search with different or English keywords.
+
         Answer ONLY HR questions grounded in the documents returned by searchHrDocuments.
         NEVER use your own prior knowledge — only the retrieved document excerpts.
         Cite every claim: include the document name, date, and page or slide number.
-        The user's message may be in Serbian, Albanian, or English — search in the same language the user wrote.
-        If no relevant document is found, say: "I could not find an answer to your question in the %s office HR documents."
+        If no relevant document is found after searching, say: "I could not find an answer to your question in the %s office HR documents."
         REFUSE non-HR questions with: "I can only help with HR questions for the %s office, based on our HR documents."
         NEVER mention or speculate about the other office's documents or policies.
         """;
@@ -70,10 +76,15 @@ public class HrAgentService {
     }
 
     public ChatResponse answer(String question, String language, String office) {
-        return answer(question, language, office, "anonymous");
+        return answer(question, language, office, "anonymous", List.of());
     }
 
     public ChatResponse answer(String question, String language, String office, String upn) {
+        return answer(question, language, office, upn, List.of());
+    }
+
+    public ChatResponse answer(String question, String language, String office, String upn,
+                               List<Map<String, String>> history) {
         // Guard: API key must be set
         String apiKey = props.getAnthropic().getApiKey();
         if (apiKey == null || apiKey.isBlank()) {
@@ -83,7 +94,7 @@ public class HrAgentService {
             return new ChatResponse(msg, language, List.of(), false, null);
         }
 
-        // Grounding gate (#2)
+        // Grounding gate (#2) — checks only the current question, never history
         Optional<String> refusal = scopeGuard.check(question, office);
         if (refusal.isPresent()) {
             auditService.log(upn, office, question, false, refusal.get());
@@ -91,7 +102,18 @@ public class HrAgentService {
         }
 
         String systemPrompt = SYSTEM_PROMPT_TEMPLATE.formatted(office, language, office, office);
+
+        // Build messages: prepend history (capped at 20 entries / 10 turns), then add current question.
+        // History items come from the client as [{role:"user"|"assistant", content:"..."}] pairs.
         List<Map<String, Object>> messages = new ArrayList<>();
+        if (history != null && !history.isEmpty()) {
+            List<Map<String, String>> capped = history.size() > 20
+                    ? history.subList(history.size() - 20, history.size())
+                    : history;
+            for (Map<String, String> turn : capped) {
+                messages.add(Map.of("role", turn.get("role"), "content", turn.get("content")));
+            }
+        }
         messages.add(Map.of("role", "user", "content", question));
 
         List<Citation> citations = new ArrayList<>();

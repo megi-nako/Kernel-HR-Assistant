@@ -21,8 +21,11 @@ public class LanguageDetector {
 
     // Serbian SR keywords (function words + HR/insurance domain terms)
     private static final Set<String> SR_WORDS = Set.of(
-        "kako", "što", "koji", "koja", "koje", "dana", "radnog", "odmor", "zaposleni",
+        "kako", "što", "šta", "koji", "koja", "koje", "dana", "radnog", "odmor", "zaposleni",
         "kompanija", "pravilnik", "godišnji", "bolovanje", "zahtev", "nije", "sam",
+        "znate", "znam", "znači", "možete", "možemo", "možeš", "treba", "trebam",
+        "ima", "imam", "imamo", "može", "moramo", "moram",
+        "kada", "gde", "gdje", "zašto", "koliko",
         // HR/insurance terms found in Serbia documents
         "limita", "učešća", "isključenje", "naknada", "naknade", "naknadu",
         "osiguranje", "osiguranja", "broju", "pravo", "prava", "dani",
