@@ -1,16 +1,12 @@
 package com.kernel.hr.store;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Vector store backed by PostgreSQL + pgvector.
@@ -24,18 +20,11 @@ import java.util.stream.Collectors;
 public class VectorStore {
 
     private static final Logger log = LoggerFactory.getLogger(VectorStore.class);
-
-    public record Scored(Chunk chunk, double score) {}
-
     private final JdbcTemplate jdbc;
 
     public VectorStore(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
-
-    // -------------------------------------------------------------------------
-    // Write
-    // -------------------------------------------------------------------------
 
     public void upsert(List<Chunk> chunks) {
         for (Chunk chunk : chunks) {
@@ -65,7 +54,7 @@ public class VectorStore {
     }
 
     // -------------------------------------------------------------------------
-    // Read
+    // Write
     // -------------------------------------------------------------------------
 
     /**
@@ -90,6 +79,10 @@ public class VectorStore {
         );
     }
 
+    // -------------------------------------------------------------------------
+    // Read
+    // -------------------------------------------------------------------------
+
     public boolean hasChunk(String id) {
         Integer count = jdbc.queryForObject(
                 "SELECT COUNT(1) FROM chunks WHERE id = ?", Integer.class, id);
@@ -102,21 +95,17 @@ public class VectorStore {
         return count != null ? count : 0;
     }
 
-    // -------------------------------------------------------------------------
-    // No-ops — PostgreSQL handles persistence natively
-    // -------------------------------------------------------------------------
-
     public void save() {
         log.debug("save() is a no-op — PostgreSQL persists automatically.");
     }
 
+    // -------------------------------------------------------------------------
+    // No-ops — PostgreSQL handles persistence natively
+    // -------------------------------------------------------------------------
+
     public void load() {
         log.debug("load() is a no-op — PostgreSQL persists automatically.");
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     private String toVectorLiteral(float[] vector) {
         if (vector == null) return null;
@@ -128,6 +117,10 @@ public class VectorStore {
         sb.append("]");
         return sb.toString();
     }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
 
     private float[] parseVectorLiteral(String s) {
         if (s == null) return null;
@@ -155,4 +148,6 @@ public class VectorStore {
                 parseVectorLiteral(rs.getString("vector"))
         );
     }
+
+    public record Scored(Chunk chunk, double score) {}
 }
