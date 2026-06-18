@@ -1,8 +1,8 @@
-# Kernel HR Assistant — Frontend
+# Eva — Engineering Virtual Assistant (Frontend)
 
-React + Vite single-page app for the Kernel HR Assistant, built on the
-**Harmony design system** (tokens in `src/index.css`, primitives in
-`src/components/ds/`).
+React + Vite single-page app for Eva, the Engineering HR assistant, built on an
+**Engineering-branded design system** (tokens in `src/index.css`, primitives in
+`src/components/ds/`). Branding is centralized in `src/brand.js`.
 
 ## Develop
 
@@ -40,7 +40,7 @@ The REST contract (`/api/login`, `/api/chat`, `/api/status`, `/api/users`,
 
 - `src/App.jsx` — routes (`/login`, `/chat`) + auth guard.
 - `src/components/` — `LoginScreen`, `Sidebar`, `ChatLayout`, `ChatView`.
-- `src/components/ds/` — Harmony primitives (`Button`, `IconButton`, `Avatar`,
+- `src/components/ds/` — design-system primitives (`Button`, `IconButton`, `Avatar`,
   `Badge`, `ChatBubble`, `TypingIndicator`).
 - `src/contexts/SessionContext.jsx` — in-memory auth session.
 - `src/services/` — `api.js` (real), `mockApi.js` (mock), `index.js` (facade).

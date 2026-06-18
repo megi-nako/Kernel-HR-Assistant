@@ -3,7 +3,7 @@ import React from 'react'
 const PADS = { sm: 'var(--space-4)', md: 'var(--space-6)', lg: 'var(--space-8)' }
 
 /**
- * Surface container — soft-rounded, low shadow. The base panel of Harmony.
+ * Surface container — soft-rounded, low shadow. The base panel of the UI.
  */
 export function Card({ children, padding = 'md', interactive = false, selected = false, style, onClick, ...rest }) {
   const [hover, setHover] = React.useState(false)
