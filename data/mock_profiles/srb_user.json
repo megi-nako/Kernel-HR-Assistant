@@ -1,0 +1,24 @@
+{
+  "displayName": "Marko Nikolic",
+  "account": [
+    {
+      "userPrincipalName": "Marko.Nikolic@eng.it",
+      "userPersona": "internalMember"
+    }
+  ],
+  "positions": [
+    {
+      "isCurrent": true,
+      "detail": {
+        "company": {
+          "displayName": "Engineering Serbia d.o.o.",
+          "department": "Development",
+          "address": {
+            "city": "Beograd",
+            "countryOrRegion": "Serbia"
+          }
+        }
+      }
+    }
+  ]
+}

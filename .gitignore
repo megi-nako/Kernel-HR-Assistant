@@ -1,0 +1,24 @@
+# Build outputs
+target/
+*.class
+
+# Frontend
+node_modules/
+dist/
+.angular/
+
+# Data / secrets
+data/index.json
+data/_srb_extracted/
+.env
+*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

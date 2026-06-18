@@ -1,0 +1,42 @@
+kernel:
+  anthropic:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${CLAUDE_MODEL:claude-opus-4-8}
+
+  embedding:
+    provider: ${EMBEDDING_PROVIDER:voyage}
+    voyage-api-key: ${VOYAGE_API_KEY:}
+    model: ${EMBEDDING_MODEL:voyage-3}
+
+  srb:
+    source: ${SRB_SOURCE:zip}
+    zip-path: ${SRB_ZIP_PATH:./data/srb_docs.zip}
+    extract-dir: ${SRB_EXTRACT_DIR:./data/_srb_extracted}
+
+  alb:
+    source: ${ALB_SOURCE:sharepoint}
+    zip-path: ${ALB_ZIP_PATH:}
+
+  graph:
+    tenant-id: ${GRAPH_TENANT_ID:}
+    client-id: ${GRAPH_CLIENT_ID:}
+    client-secret: ${GRAPH_CLIENT_SECRET:}
+
+  sharepoint:
+    site-id: ${SHAREPOINT_SITE_ID:}
+    drive-id: ${SHAREPOINT_DRIVE_ID:}
+
+  auth:
+    mode: ${AUTH_MODE:mock}
+    mock-profile-path: ${MOCK_PROFILE_PATH:../data/mock_profiles/}
+
+  index:
+    path: ${INDEX_PATH:./data/index.json}
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.kernel.hr: DEBUG
+    org.springframework.security: INFO

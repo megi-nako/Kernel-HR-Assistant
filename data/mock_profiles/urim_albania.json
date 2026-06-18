@@ -1,0 +1,24 @@
+{
+  "displayName": "Urim Toshi",
+  "account": [
+    {
+      "userPrincipalName": "Urim.Toshi@eng.it",
+      "userPersona": "internalMember"
+    }
+  ],
+  "positions": [
+    {
+      "isCurrent": true,
+      "detail": {
+        "company": {
+          "displayName": "Engineering Albania SHPK",
+          "department": "Sede di Tirana",
+          "address": {
+            "city": "Tirana",
+            "countryOrRegion": "Albania"
+          }
+        }
+      }
+    }
+  ]
+}
