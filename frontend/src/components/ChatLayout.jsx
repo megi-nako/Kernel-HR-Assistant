@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import ChatView from './ChatView'
 import { useSession } from '../contexts/SessionContext'
@@ -32,38 +32,82 @@ function buildHistory(msgs) {
   return result.slice(-20)
 }
 
+// Bucket an ISO timestamp into a sidebar group label.
+function whenLabel(iso) {
+  if (!iso) return 'Today'
+  const d = new Date(iso)
+  const today = new Date()
+  if (d.toDateString() === today.toDateString()) return 'Today'
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  return 'Earlier'
+}
+
 export default function ChatLayout() {
   const { user } = useSession()
-  const [messages, setMessages]         = useState([])
-  const [typing, setTyping]             = useState(false)
+  const [messages, setMessages]           = useState([])
+  const [typing, setTyping]               = useState(false)
   const [conversations, setConversations] = useState([])
-  const [activeId, setActiveId]         = useState(null)
-  const [title, setTitle]               = useState('New chat')
-  const timer                           = useRef(null)
-  // ref so newChat/selectChat can read the current messages without stale closure
-  const messagesRef                     = useRef(messages)
-  const titleRef                        = useRef(title)
-  const activeIdRef                     = useRef(activeId)
+  const [activeId, setActiveId]           = useState(null)
+  const [title, setTitle]                 = useState('New chat')
+  const timer                             = useRef(null)
+  // refs so async callbacks read current values without stale closures
+  const messagesRef                       = useRef(messages)
+  const titleRef                          = useRef(title)
+  const activeIdRef                        = useRef(activeId)
   messagesRef.current  = messages
   titleRef.current     = title
   activeIdRef.current  = activeId
 
+  // Load the user's persisted conversations on mount (survives refresh / re-login).
+  useEffect(() => {
+    api.listConversations()
+      .then((list) => setConversations(
+        (list ?? []).map((c) => ({
+          id: c.id,
+          title: c.title,
+          when: whenLabel(c.updatedAt),
+          updatedAt: c.updatedAt,
+        }))
+      ))
+      .catch(() => {})
+  }, [])
+
+  // Persist a conversation to the server and float it to the top of the sidebar.
+  const persist = (id, convTitle, msgs) => {
+    setConversations((prev) => {
+      const others = prev.filter((c) => c.id !== id)
+      return [{ id, title: convTitle, when: 'Today', updatedAt: new Date().toISOString(), messages: msgs }, ...others]
+    })
+    api.saveConversation({ id, title: convTitle, messages: msgs }).catch(() => {})
+  }
+
   const send = async (text) => {
     // Snapshot history BEFORE the optimistic user-message update so the new
     // question is not included in the history sent to the backend.
-    const historySnapshot = buildHistory(messages)
+    const baseMsgs = messagesRef.current
+    const historySnapshot = buildHistory(baseMsgs)
 
-    setMessages((m) => [...m, { role: 'user', text, time: now() }])
-    if (!activeId) {
-      setTitle(text.length > 38 ? text.slice(0, 38) + '…' : text)
+    // Give the conversation a stable id + title on its first message.
+    let convId = activeIdRef.current
+    let convTitle = titleRef.current
+    if (!convId) {
+      convId = String(Date.now())
+      convTitle = text.length > 38 ? text.slice(0, 38) + '…' : text
+      setActiveId(convId)
+      setTitle(convTitle)
     }
+
+    const withUser = [...baseMsgs, { role: 'user', text, time: now() }]
+    setMessages(withUser)
     setTyping(true)
     clearTimeout(timer.current)
     try {
       const res = await api.chat(text, historySnapshot)
       timer.current = setTimeout(() => {
         setTyping(false)
-        setMessages((m) => [...m, {
+        const finalMsgs = [...withUser, {
           role: 'ai',
           text: res.text,
           time: now(),
@@ -71,31 +115,19 @@ export default function ChatLayout() {
           citations: res.citations,
           refused: res.refused,
           reason: res.reason,
-        }])
+        }]
+        setMessages(finalMsgs)
+        persist(convId, convTitle, finalMsgs)
       }, 500)
     } catch {
       setTyping(false)
-      setMessages((m) => [...m, { role: 'ai', text: 'Error contacting the assistant. Please try again.', time: now() }])
+      const finalMsgs = [...withUser, { role: 'ai', text: 'Error contacting the assistant. Please try again.', time: now() }]
+      setMessages(finalMsgs)
+      persist(convId, convTitle, finalMsgs)
     }
   }
 
-  // Archive the current conversation (if non-empty) to the sidebar history list.
-  const archiveCurrent = () => {
-    const msgs = messagesRef.current
-    if (msgs.length === 0) return
-    const convTitle = titleRef.current === 'New chat'
-      ? (msgs[0]?.text.slice(0, 40) + (msgs[0]?.text.length > 40 ? '…' : ''))
-      : titleRef.current
-    setConversations((prev) => [{
-      id: activeIdRef.current ?? String(Date.now()),
-      title: convTitle,
-      when: 'Today',
-      messages: msgs,
-    }, ...prev.filter((c) => c.id !== activeIdRef.current)])
-  }
-
   const newChat = () => {
-    archiveCurrent()
     clearTimeout(timer.current)
     setTyping(false)
     setActiveId(null)
@@ -103,17 +135,27 @@ export default function ChatLayout() {
     setMessages([])
   }
 
-  const selectChat = (id) => {
+  const selectChat = async (id) => {
     clearTimeout(timer.current)
     setTyping(false)
-    // Archive the currently open (unsaved) conversation before switching
-    if (activeIdRef.current === null) archiveCurrent()
-    const conv = conversations.find((c) => c.id === id) ||
-                 [{ id, title: 'New chat', when: 'Today', messages: [] }].find(() => true)
-    if (!conv) return
+    const conv = conversations.find((c) => c.id === id)
     setActiveId(id)
-    setTitle(conv.title)
-    setMessages(conv.messages)
+    setTitle(conv?.title ?? 'New chat')
+    // Messages already cached locally (a conversation we created/opened this session)
+    if (conv?.messages) {
+      setMessages(conv.messages)
+      return
+    }
+    // Otherwise fetch the full message list from the server (loaded lazily).
+    try {
+      const full = await api.getConversation(id)
+      const msgs = full?.messages ?? []
+      setMessages(msgs)
+      if (full?.title) setTitle(full.title)
+      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, messages: msgs } : c)))
+    } catch {
+      setMessages([])
+    }
   }
 
   return (

@@ -46,7 +46,14 @@ export const login     = (...a) => call('login', a)
 export const logout    = (...a) => call('logout', a)
 export const chat      = (...a) => call('chat', a)
 export const status    = (...a) => call('status', a)
+export const listConversations = (...a) => call('listConversations', a)
+export const getConversation   = (...a) => call('getConversation', a)
+export const saveConversation  = (...a) => call('saveConversation', a)
 
 export const isUsingMock = () => useMock
 
-export default { listUsers, login, logout, chat, status, isUsingMock }
+export default {
+  listUsers, login, logout, chat, status,
+  listConversations, getConversation, saveConversation,
+  isUsingMock,
+}
