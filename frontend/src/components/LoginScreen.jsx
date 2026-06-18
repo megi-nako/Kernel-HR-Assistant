@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Clock, ShieldCheck, Lock } from 'lucide-react'
 import { useSession } from '../contexts/SessionContext'
-import mockApi from '../services/mockApi'
+import api from '../services'
 
 function Feature({ icon: Icon, title, desc }) {
   return (
@@ -31,7 +31,7 @@ export default function LoginScreen() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    mockApi.listUsers().then(setUsers)
+    api.listUsers().then(setUsers).catch(() => setError('Could not load profiles.'))
   }, [])
 
   const signIn = async () => {
@@ -39,7 +39,7 @@ export default function LoginScreen() {
     setLoading(true)
     setError('')
     try {
-      const user = await mockApi.login(selectedUser)
+      const user = await api.login(selectedUser)
       setUser(user)
       navigate('/chat')
     } catch (e) {

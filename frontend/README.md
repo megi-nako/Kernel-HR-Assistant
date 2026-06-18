@@ -1,27 +1,46 @@
-# Frontend
+# Kernel HR Assistant — Frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.6.
+React + Vite single-page app for the Kernel HR Assistant, built on the
+**Harmony design system** (tokens in `src/index.css`, primitives in
+`src/components/ds/`).
 
-## Development server
+## Develop
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+```bash
+npm install
+npm run dev      # http://localhost:4200
+```
 
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+The dev server proxies `/api/*` to the Spring Boot backend on
+`http://localhost:8080` (see `vite.config.js`), so no CORS setup is needed.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm run build    # outputs to dist/
+npm run preview  # serve the production build
+```
 
-## Running unit tests
+## Backend wiring
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+All components talk to the backend through the unified facade in
+`src/services/index.js`. Which implementation it uses is controlled by the
+`VITE_USE_MOCK` environment variable (copy `.env.example` to `.env`):
 
-## Running end-to-end tests
+| `VITE_USE_MOCK` | Behaviour                                                                 |
+|-----------------|---------------------------------------------------------------------------|
+| _unset_ / `auto`| Use the real backend; **fall back to the in-memory mock if it's unreachable** (default). |
+| `false`         | Always use the real backend; surface errors as-is.                        |
+| `true`          | Always use the in-memory mock (`src/services/mockApi.js`) — no backend needed. |
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+The REST contract (`/api/login`, `/api/chat`, `/api/status`, `/api/users`,
+`/api/logout`) matches the backend's frozen Contract D DTOs.
 
-## Further help
+## Structure
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- `src/App.jsx` — routes (`/login`, `/chat`) + auth guard.
+- `src/components/` — `LoginScreen`, `Sidebar`, `ChatLayout`, `ChatView`.
+- `src/components/ds/` — Harmony primitives (`Button`, `IconButton`, `Avatar`,
+  `Badge`, `ChatBubble`, `TypingIndicator`).
+- `src/contexts/SessionContext.jsx` — in-memory auth session.
+- `src/services/` — `api.js` (real), `mockApi.js` (mock), `index.js` (facade).

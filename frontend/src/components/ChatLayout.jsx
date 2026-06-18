@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react'
 import Sidebar from './Sidebar'
 import ChatView from './ChatView'
 import { useSession } from '../contexts/SessionContext'
-import mockApi from '../services/mockApi'
+import api from '../services'
 
 const INITIAL_HISTORY = [
   { id: 'c1', title: 'Remaining vacation days',   when: 'Today' },
@@ -32,7 +32,7 @@ export default function ChatLayout() {
     setTyping(true)
     clearTimeout(timer.current)
     try {
-      const res = await mockApi.chat(text)
+      const res = await api.chat(text)
       timer.current = setTimeout(() => {
         setTyping(false)
         setMessages((m) => [...m, {

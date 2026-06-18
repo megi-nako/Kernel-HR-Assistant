@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080'
+// Default to relative paths so the Vite dev proxy (vite.config.js → :8080) handles
+// requests with no CORS friction. Override with VITE_API_BASE for a non-proxied build.
+const BASE = import.meta.env.VITE_API_BASE ?? ''
 
 async function req(method, path, body) {
   const res = await fetch(`${BASE}${path}`, {
@@ -7,7 +9,11 @@ async function req(method, path, body) {
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
   })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status}`)
+    err.status = res.status
+    throw err
+  }
   return res.json()
 }
 

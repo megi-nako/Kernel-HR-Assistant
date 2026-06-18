@@ -78,6 +78,7 @@
   --bubble-ai-border: var(--neutral-200);
 
   --ring-brand: 0 0 0 4px rgba(99, 102, 241, 0.28);
+  --ring-danger: 0 0 0 4px rgba(239, 68, 68, 0.24);
 
   /* Typography */
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;

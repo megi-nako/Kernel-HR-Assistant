@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Avatar } from './ds/Avatar'
 import { Button } from './ds/Button'
 import { useSession } from '../contexts/SessionContext'
-import mockApi from '../services/mockApi'
+import api from '../services'
 
 function HistoryItem({ item, active, onSelect }) {
   const [hover, setHover] = useState(false)
@@ -37,7 +37,7 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
   const [status, setStatus] = useState(null)
 
   useEffect(() => {
-    mockApi.status().then(setStatus).catch(() => {})
+    api.status().then(setStatus).catch(() => {})
   }, [])
 
   const groups = {}
@@ -131,7 +131,7 @@ export default function Sidebar({ history, activeId, onSelect, onNew }) {
             </div>
           </div>
           <button
-            onClick={async () => { await mockApi.logout(); clearUser(); navigate('/login') }}
+            onClick={async () => { await api.logout(); clearUser(); navigate('/login') }}
             title="Sign out"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
